@@ -42,8 +42,6 @@ namespace Code.EcsSystems
 
         public void Act(IEntityStorage storage)
         {
-            bool statsPresent = storage.TrySingle(out Entity<CollisionStats> stats);
-            
             int stepCount = config.movementStepCount;
             float dt = Time.deltaTime / stepCount;
             for (int i = 0; i < stepCount; i++)
@@ -113,11 +111,6 @@ namespace Code.EcsSystems
                         Entity<Velocity,Mass> another_ = new Entity<Velocity, Mass>(world.PackEntityWithWorld(another));
                         if (!DoDistanceGrow(entity_, another_, dt))
                         {
-                            if (statsPresent)
-                            {
-                                stats.Get<CollisionStats>().collisions++;
-                            }
-                            
                             if (another_.Get<BallType>().config == entity_.Get<BallType>().config)
                             {
                                 Merge(entity_, another_);

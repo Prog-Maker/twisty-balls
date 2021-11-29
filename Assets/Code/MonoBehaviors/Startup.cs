@@ -105,7 +105,6 @@ public class Startup : MonoBehaviour
     private void Start()
     {
         _storage.NewEntity().Add<StartGameCommand>();
-        _storage.NewEntity().Add<CollisionStats>();
     }
 
     private void Update()
