@@ -22,3 +22,7 @@ Hot places rewritten using low-level LeoECS Lite API.
 * [Game screenshot (35.05 fps)](perf/stand5000_opti.png)
 * Code branch: `lite_opt` ([link](../../tree/lite_opt))
 * Download: [Windows x86_64](https://drive.google.com/file/d/1BjHGHIPlCEtSkbzr-SUH5h78KfUByXnO/view?usp=sharing)
+
+### Pure LeoECS Lite
+Only LeoECS Lite with official DI extension is used
+* Code branch: `pure_lite` ([link](../../tree/pure_lite))
