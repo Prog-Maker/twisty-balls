@@ -1,5 +1,6 @@
 using System;
 using Code.EcsComponents;
+using Code.Oop;
 using Kk.LeoQuery;
 using UnityEngine;
 
@@ -12,6 +13,9 @@ namespace Code.EcsSystems
             fontSize = 32
         });
 
+        private const int BufferSizeSeconds = 3;
+        private readonly FpsBuffer _fpsBuffer = new FpsBuffer(bufferSizeSeconds: BufferSizeSeconds, cacheTtl: 1);
+
         public void Act(IEntityStorage storage)
         {
             int ballCount = 0;
@@ -19,11 +23,13 @@ namespace Code.EcsSystems
             {
                 ballCount++;
             }
+            
+            _fpsBuffer.AddDeltaTime(Time.deltaTime);
 
-            GUILayout.Label($"Version: Sugar", _style.Value);
-            GUILayout.Label($"FPS: {1f/Time.smoothDeltaTime}", _style.Value);
-            GUILayout.Label($"Balls: {ballCount}", _style.Value);
-            GUILayout.Label($"Frames: {Time.frameCount}", _style.Value);
+            GUILayout.Label($"Version: Full Sugar", _style.Value);
+            GUILayout.Label($"FPS: {_fpsBuffer.GetFps()} (smoothing: {BufferSizeSeconds}s)", _style.Value);
+            GUILayout.Label($"Balls:            {ballCount}", _style.Value);
+            GUILayout.Label($"Frames:           {Time.frameCount}", _style.Value);
         }
     }
 }
