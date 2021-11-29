@@ -12,6 +12,11 @@ namespace Code.EcsSystems
             {
                 storage.NewEntity().Add<RestartGameCommand>();
             }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Application.Quit();
+            }
         }
     }
 }
