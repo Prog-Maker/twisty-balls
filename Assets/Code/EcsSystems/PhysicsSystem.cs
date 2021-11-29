@@ -4,6 +4,7 @@ using Code.Extensions;
 using Code.MonoBehaviors;
 using Code.SO;
 using Kk.LeoQuery;
+using Leopotam.EcsLite;
 using UnityEngine;
 
 namespace Code.EcsSystems
@@ -16,10 +17,33 @@ namespace Code.EcsSystems
         [Inject]
         public Config config;
 
+        private EcsPool<Position> _pos;
+        private EcsPool<Mass> _mass;
+        private EcsPool<Velocity> _velocity;
+        private EcsPool<BallDestroyAction> _ballDestroy;
+        private EcsPool<CollisionApplied> _collAppl;
+        private EcsPool<PushToScene> _push;
+        private EcsFilter _balls;
+        private EcsFilter _collAppls;
+
         private static Collider2D[] _results = new Collider2D[1024];
+
+        public PhysicsSystem(EcsWorld world)
+        {
+            _pos = world.GetPool<Position>();
+            _mass = world.GetPool<Mass>();
+            _velocity = world.GetPool<Velocity>();
+            _ballDestroy = world.GetPool<BallDestroyAction>();
+            _collAppl = world.GetPool<CollisionApplied>();
+            _push = world.GetPool<PushToScene>();
+            _balls = world.Filter<Velocity>().Inc<Mass>().End();
+            _collAppls = world.Filter<CollisionApplied>().End();
+        }
 
         public void Act(IEntityStorage storage)
         {
+            bool statsPresent = storage.TrySingle(out Entity<CollisionStats> stats);
+            
             int stepCount = config.movementStepCount;
             float dt = Time.deltaTime / stepCount;
             for (int i = 0; i < stepCount; i++)
@@ -27,63 +51,83 @@ namespace Code.EcsSystems
                 int count = 0;
                 Vector2 center = Vector2.zero;
                 float totalMass = 0;
-                foreach (var entity in storage.Query<Mass>())
+                foreach (int entity in _balls)
                 {
-                    totalMass += entity.Get1().mass;
-                    center += entity.Get<Position>().position;
+                    totalMass += _mass.Get(entity).mass;
+                    center += _pos.Get(entity).position;
                     count++;
                 }
 
                 center /= count;
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                foreach (int entity in _balls)
                 {
                     // float a = config.gravity * (totalMass - entity.Get2().mass) / (entity.Get<Position>().position - center).sqrMagnitude;
                     float a = config.gravity;
-                    entity.Get1().velocity -= entity.Get<Position>().position.normalized * (a * dt);
+                    _velocity.Get(entity).velocity -= _pos.Get(entity).position.normalized * (a * dt);
                 }
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                foreach (int entity in _balls)
                 {
-                    entity.Get<Position>().position += entity.Get1().velocity * dt;
+                    _pos.Get(entity).position += _velocity.Get(entity).velocity * dt;
                 }
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                foreach (int entity in _balls)
                 {
-                    if (!entity.Has1() || !entity.Has2())
+                    if (!_velocity.Has(entity) || !_mass.Has(entity))
                     {
                         // because this loop can delete these components by reference from this loop
                         continue;
                     }
 
-                    if (entity.Has<CollisionApplied>())
+                    if (_collAppl.Has(entity))
                     {
                         continue;
                     }
 
-                    ref Position position = ref entity.Get<Position>();
+                    ref Position position = ref _pos.Get(entity);
 
-                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, entity.Get2().CalcBallDiameter(config) / 2, _results);
+                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, _mass.Get(entity).CalcBallDiameter(config) / 2, _results);
                     for (int j = 0; j < collisionCount; j++)
                     {
-                        if (_results[j].TryGetComponent(out EntityLink link)
-                            && link.entity.TryGet(out Entity<Velocity, Mass> another)
-                            && another != entity
-                            && !another.Has<BallDestroyAction>()
-                            && !another.Has<CollisionApplied>()
-                            && !DoDistanceGrow(entity, another, dt)
-                        )
+                        if (!_results[j].TryGetComponent(out EntityLink link))
+                            continue;
+
+                        if (!link.entity.raw.Unpack(out var world, out int another))
+                            continue;
+
+                        if (!_velocity.Has(another))
+                            continue;
+
+                        if (!_mass.Has(another))
+                            continue;
+                        
+                        if (another == entity) 
+                            continue; 
+                        
+                        if (_ballDestroy.Has(another))
+                            continue;
+                        if (_collAppl.Has(another)) 
+                            continue;
+                        Entity<Velocity,Mass> entity_ = new Entity<Velocity, Mass>(world.PackEntityWithWorld(entity));
+                        Entity<Velocity,Mass> another_ = new Entity<Velocity, Mass>(world.PackEntityWithWorld(another));
+                        if (!DoDistanceGrow(entity_, another_, dt))
                         {
-                            if (another.Get<BallType>().config == entity.Get<BallType>().config)
+                            if (statsPresent)
                             {
-                                Merge(entity, another);
+                                stats.Get<CollisionStats>().collisions++;
+                            }
+                            
+                            if (another_.Get<BallType>().config == entity_.Get<BallType>().config)
+                            {
+                                Merge(entity_, another_);
                             }
                             else
                             {
-                                Bounce(entity, another);
+                                Bounce(entity_, another_);
                             }
 
-                            another.Add<CollisionApplied>();
+                            another_.Add<CollisionApplied>();
                             break;
                         }
                     }
@@ -139,7 +183,7 @@ namespace Code.EcsSystems
             Vector2 p2 = b2.Get<Position>().position;
             Vector2 v1 = b1.Get1().velocity;
             Vector2 v2 = b2.Get1().velocity;
-            
+
             return (p1 - p2).sqrMagnitude > (p1 - v1 * dt - (p2 - v2 * dt)).sqrMagnitude;
         }
 

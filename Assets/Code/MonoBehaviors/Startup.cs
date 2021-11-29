@@ -37,11 +37,11 @@ public class Startup : MonoBehaviour
                 .Add(new StartGameSystem())
                 .Add(new BallInitSystem())
                 .Add(new RestartGameSystem())
-                .Add(new PhysicsSystem())
+                .Add(new PhysicsSystem(_debugger.GetWorld()))
                 .Add(new CriticalMassExplosionSystem())
                 .Add(new BallDestroySystem())
                 // visualize
-                .Add(new BallPushToSceneSystem())
+                .Add(new BallPushToSceneSystem(_debugger.GetWorld()))
                 .ForEach(injector.InjectInto)
             ;
 
@@ -104,6 +104,7 @@ public class Startup : MonoBehaviour
     private void Start()
     {
         _storage.NewEntity().Add<StartGameCommand>();
+        _storage.NewEntity().Add<CollisionStats>();
     }
 
     private void Update()
