@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialSpawn:
     maxCenterDistance: 954.3
-    ballNumber: 1008
+    ballNumber: 2000
     ballSpeed: 546.5
     ballMass: 1000
   ballPrefab: {fileID: 6886748543666266063, guid: a5b1b1e5c9ef5c84bb5e11768880e076,
