@@ -20,7 +20,9 @@ namespace Code.EcsSystems
                 ballCount++;
             }
 
+            GUILayout.Label($"FPS: {1f/Time.smoothDeltaTime}", _style.Value);
             GUILayout.Label($"Balls: {ballCount}", _style.Value);
+            GUILayout.Label($"Frames: {Time.frameCount}", _style.Value);
         }
     }
 }
