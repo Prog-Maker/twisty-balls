@@ -18,12 +18,12 @@ namespace Code.EcsSystems
                 GameObject ball = entity.Get<Go>().go;
                 if (entity.Get1().requestCount > 0)
                 {
-                    ball.transform.localScale = Vector3.one * entity.Get<Mass>().CalcBallDiameter(config);
-                    ball.GetComponent<Renderer>().material.color = entity.Get<BallType>().config.color;
+                    ball.transform.localScale = Vector3.one * entity.Get<BallBody>().CalcBallDiameter(config);
+                    ball.GetComponent<Renderer>().material.color = entity.Get<BallBody>().config.color;
                     entity.Get1().requestCount = 0;
                 }
 
-                ball.transform.localPosition = entity.Get<Position>().position;
+                ball.transform.localPosition = entity.Get<BallBody>().position;
             }
         }
     }

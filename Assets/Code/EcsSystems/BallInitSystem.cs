@@ -16,10 +16,13 @@ namespace Code.EcsSystems
             foreach (Entity<BallInitAction> entity in storage.Query<BallInitAction>())
             {
                 BallInitAction initAction = entity.Get1();
-                entity.Add<Position>().position = initAction.position;
-                entity.Add<Velocity>().velocity = initAction.direction * initAction.speed;
-                entity.Add<Mass>().mass = initAction.mass;
-                entity.Add(new BallType(initAction.config));
+                
+                ref BallBody body = ref entity.Add<BallBody>();
+                body.position = initAction.position;
+                body.velocity = initAction.direction * initAction.speed;
+                body.mass = initAction.mass;
+                body.config = initAction.config;
+                
                 GameObject go = Object.Instantiate(config.ballPrefab);
                 go.name = initAction.name;
                 go.AddComponent<EntityLink>().entity = entity;

@@ -14,7 +14,7 @@ namespace Code.EcsSystems
         
         public void Act(IEntityStorage storage)
         {
-            foreach (Entity<Mass> entity in storage.Query<Mass>())
+            foreach (Entity<BallBody> entity in storage.Query<BallBody>())
             {
                 if (entity.Get1().mass > config.criticalMass)
                 {
@@ -27,7 +27,7 @@ namespace Code.EcsSystems
                         Vector2 offset = Random.insideUnitCircle * diameter;
                         storage.NewEntity().Add(new BallInitAction(
                             name: "fragment",
-                            position: entity.Get<Position>().position + offset,
+                            position: entity.Get<BallBody>().position + offset,
                             direction: offset.normalized,
                             speed: config.criticalExplosionSpeed,
                             mass: entity.Get1().mass / config.ballTypes.Length,

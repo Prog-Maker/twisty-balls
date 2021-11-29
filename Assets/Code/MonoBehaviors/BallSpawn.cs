@@ -21,7 +21,7 @@ namespace Code.MonoBehaviors
                 GetComponent<Renderer>().material.color = type.color;
             }
 
-            transform.localScale = Vector3.one * new Mass { mass = mass }.CalcBallDiameter(config);
+            transform.localScale = Vector3.one * new BallBody { mass = mass }.CalcBallDiameter(config);
         }
     }
 }

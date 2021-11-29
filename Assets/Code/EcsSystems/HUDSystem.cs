@@ -15,7 +15,7 @@ namespace Code.EcsSystems
         public void Act(IEntityStorage storage)
         {
             int ballCount = 0;
-            foreach (Entity<BallType> _ in storage.Query<BallType>())
+            foreach (Entity<BallBody> _ in storage.Query<BallBody>())
             {
                 ballCount++;
             }

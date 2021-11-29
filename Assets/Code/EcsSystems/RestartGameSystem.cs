@@ -9,7 +9,7 @@ namespace Code.EcsSystems
         {
             foreach (Entity<RestartGameCommand> command in storage.Query<RestartGameCommand>())
             {
-                foreach (Entity<BallType> entity in storage.Query<BallType>())
+                foreach (Entity<BallBody> entity in storage.Query<BallBody>())
                 {
                     entity.Add(new BallDestroyAction());
                 }
