@@ -1,12 +1,13 @@
 using System;
 using Code.EcsComponents;
 using Code.Oop;
-using Kk.LeoQuery;
+using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
-namespace Code.EcsSystems
+namespace Code.Systems
 {
-    public class HUDSystem : ISystem
+    public class HUDSystem : IEcsRunSystem
     {
         private readonly Lazy<GUIStyle> _style = new Lazy<GUIStyle>(() => new GUIStyle(GUI.skin.label)
         {
@@ -16,10 +17,12 @@ namespace Code.EcsSystems
         private const int BufferSizeSeconds = 3;
         private readonly FpsBuffer _fpsBuffer = new FpsBuffer(bufferSizeSeconds: BufferSizeSeconds, cacheTtl: 1);
 
-        public void Act(IEntityStorage storage)
+        [EcsFilter(typeof(BallType))] private EcsFilter _ballTypes;
+
+        public void Run(EcsSystems systems)
         {
             int ballCount = 0;
-            foreach (Entity<BallType> _ in storage.Query<BallType>())
+            foreach (int _ in _ballTypes)
             {
                 ballCount++;
             }

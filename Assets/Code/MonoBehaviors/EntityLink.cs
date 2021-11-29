@@ -1,10 +1,10 @@
-using Kk.LeoQuery;
+using Leopotam.EcsLite;
 using UnityEngine;
 
 namespace Code.MonoBehaviors
 {
     public class EntityLink: MonoBehaviour
     {
-        public Entity entity;
+        public EcsPackedEntityWithWorld entity;
     }
 }

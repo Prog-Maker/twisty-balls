@@ -3,48 +3,34 @@ using Code.EcsComponents;
 using Code.Extensions;
 using Code.MonoBehaviors;
 using Code.SO;
-using Kk.LeoQuery;
 using Leopotam.EcsLite;
+using Leopotam.EcsLite.Di;
 using UnityEngine;
 
-namespace Code.EcsSystems
+namespace Code.Systems
 {
-    public class PhysicsSystem : ISystem
+    public class PhysicsSystem : IEcsRunSystem
     {
         [Serializable]
         private struct CollisionApplied { }
 
-        [Inject]
-        public Config config;
+        [EcsShared] private Config _config;
 
-        private EcsPool<Position> _pos;
-        private EcsPool<BallType> _type;
-        private EcsPool<Mass> _mass;
-        private EcsPool<Velocity> _velocity;
-        private EcsPool<BallDestroyAction> _ballDestroy;
-        private EcsPool<CollisionApplied> _collAppl;
-        private EcsPool<PushToScene> _push;
-        private EcsFilter _balls;
-        private EcsFilter _collAppls;
+        [EcsPool] private EcsPool<Position> _pos;
+        [EcsPool] private EcsPool<BallType> _type;
+        [EcsPool] private EcsPool<Mass> _mass;
+        [EcsPool] private EcsPool<Velocity> _velocity;
+        [EcsPool] private EcsPool<BallDestroyAction> _ballDestroy;
+        [EcsPool] private EcsPool<CollisionApplied> _collAppl;
+        [EcsPool] private EcsPool<PushToScene> _push;
+        [EcsFilter(typeof(Velocity), typeof(Mass))] private EcsFilter _balls;
+        [EcsFilter(typeof(CollisionApplied))]private EcsFilter _collAppls;
 
         private static Collider2D[] _results = new Collider2D[1024];
 
-        public PhysicsSystem(EcsWorld world)
+        public void Run(EcsSystems systems)
         {
-            _pos = world.GetPool<Position>();
-            _mass = world.GetPool<Mass>();
-            _velocity = world.GetPool<Velocity>();
-            _ballDestroy = world.GetPool<BallDestroyAction>();
-            _collAppl = world.GetPool<CollisionApplied>();
-            _push = world.GetPool<PushToScene>();
-            _type = world.GetPool<BallType>();
-            _balls = world.Filter<Velocity>().Inc<Mass>().End();
-            _collAppls = world.Filter<CollisionApplied>().End();
-        }
-
-        public void Act(IEntityStorage storage)
-        {
-            int stepCount = config.movementStepCount;
+            int stepCount = _config.movementStepCount;
             float dt = Time.deltaTime / stepCount;
             for (int i = 0; i < stepCount; i++)
             {
@@ -63,7 +49,7 @@ namespace Code.EcsSystems
                 foreach (int entity in _balls)
                 {
                     // float a = config.gravity * (totalMass - _mass.Get(entity).mass) / (_pos.Get(entity)().position - center).sqrMagnitude;
-                    float a = config.gravity;
+                    float a = _config.gravity;
                     _velocity.Get(entity).velocity -= _pos.Get(entity).position.normalized * (a * dt);
                 }
 
@@ -87,13 +73,13 @@ namespace Code.EcsSystems
 
                     ref Position position = ref _pos.Get(entity);
 
-                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, _mass.Get(entity).CalcBallDiameter(config) / 2, _results);
+                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, _mass.Get(entity).CalcBallDiameter(_config) / 2, _results);
                     for (int j = 0; j < collisionCount; j++)
                     {
                         if (!_results[j].TryGetComponent(out EntityLink link))
                             continue;
 
-                        if (!link.entity.raw.Unpack(out var world, out int another))
+                        if (!link.entity.Unpack(out EcsWorld _, out int another))
                             continue;
 
                         if (!_velocity.Has(another))

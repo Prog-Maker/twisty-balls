@@ -7,33 +7,19 @@
       "dependencies": {},
       "hash": "d5510569be1a8cf9f672a8f50e7b2f39122238c2"
     },
+    "com.leopotam.ecslite.di": {
+      "version": "https://github.com/Leopotam/ecslite-di.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c0bcb6fa6c6baad5700b64ae4d59bc24181df5f8"
+    },
     "com.leopotam.ecslite.unityeditor": {
       "version": "https://github.com/Leopotam/ecslite-unityeditor.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "93d8dcde21f441afe7226eea6635a798aa32aff9"
-    },
-    "com.nplekhanov.csx.core": {
-      "version": "https://gitlab.com/kkolyan/csx-core.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "d45050bf6d7a78d42ced398371b61e103044abe3"
-    },
-    "com.nplekhanov.csx.leohot": {
-      "version": "https://github.com/kkolyan/leohot.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "56c675c7bdf132b3ce7d4b42031e60de1224a537"
-    },
-    "com.nplekhanov.csx.leoquery": {
-      "version": "https://github.com/kkolyan/leoquery.git#develop",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "abadb363ce015853ca0c142c06a404051c789325"
     },
     "com.unity.collab-proxy": {
       "version": "1.5.7",
