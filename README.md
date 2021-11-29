@@ -26,3 +26,4 @@ Hot places rewritten using low-level LeoECS Lite API.
 ### Pure LeoECS Lite
 Only LeoECS Lite with official DI extension is used
 * Code branch: `pure_lite` ([link](../../tree/pure_lite))
+* [Standalone screenshot (36.67 fps)](perf/stand5000_liti.png)
