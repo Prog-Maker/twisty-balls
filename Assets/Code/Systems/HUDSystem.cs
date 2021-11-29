@@ -29,7 +29,7 @@ namespace Code.Systems
             
             _fpsBuffer.AddDeltaTime(Time.deltaTime);
 
-            GUILayout.Label($"Version: Semi-Pure", _style.Value);
+            GUILayout.Label($"Version: Pure Lite", _style.Value);
             GUILayout.Label($"FPS: {_fpsBuffer.GetFps()} (smoothing: {BufferSizeSeconds}s)", _style.Value);
             GUILayout.Label($"Balls:            {ballCount}", _style.Value);
             GUILayout.Label($"Frames:           {Time.frameCount}", _style.Value);
