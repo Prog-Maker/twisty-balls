@@ -39,6 +39,7 @@ namespace Code.EcsSystems
                 {
                     ball.transform.localScale = Vector3.one * _mass.Get(entity).CalcBallDiameter(config);
                     ball.GetComponent<Renderer>().material.color = _ballType.Get(entity).config.color;
+                    _push.Get(entity).requestCount = 0;
                 }
 
                 ball.transform.localPosition = _pos.Get(entity).position;
