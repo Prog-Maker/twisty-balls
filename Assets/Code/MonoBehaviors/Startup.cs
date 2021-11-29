@@ -1,12 +1,10 @@
-﻿using System;
-using Code.EcsComponents;
+﻿using Code.EcsComponents;
 using Code.EcsSystems;
 using Code.MonoBehaviors;
 using Code.SO;
 using Kk.LeoHot;
 using Kk.LeoQuery;
 using Leopotam.EcsLite;
-using Leopotam.EcsLite.UnityEditor;
 using UnityEngine;
 
 public class Startup : MonoBehaviour
@@ -90,13 +88,16 @@ public class Startup : MonoBehaviour
         storage.GetWorlds(ref rawWorlds);
 
         _debugger = new EcsSystems(rawWorlds[0]);
-        _debugger.Add(new EcsWorldDebugSystem());
+        
+#if UNITY_EDITOR
+        _debugger.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem());
         for (var i = 1; i < rawWorlds.Length; i++)
         {
             var worldName = i.ToString();
             _debugger.AddWorld(rawWorlds[i], worldName);
-            _debugger.Add(new EcsWorldDebugSystem(worldName));
+            _debugger.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem(worldName));
         }
+#endif
 
         _debugger.Init();
     }
