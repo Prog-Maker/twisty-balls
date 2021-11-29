@@ -18,6 +18,7 @@ namespace Code.EcsSystems
         public Config config;
 
         private EcsPool<Position> _pos;
+        private EcsPool<BallType> _type;
         private EcsPool<Mass> _mass;
         private EcsPool<Velocity> _velocity;
         private EcsPool<BallDestroyAction> _ballDestroy;
@@ -36,6 +37,7 @@ namespace Code.EcsSystems
             _ballDestroy = world.GetPool<BallDestroyAction>();
             _collAppl = world.GetPool<CollisionApplied>();
             _push = world.GetPool<PushToScene>();
+            _type = world.GetPool<BallType>();
             _balls = world.Filter<Velocity>().Inc<Mass>().End();
             _collAppls = world.Filter<CollisionApplied>().End();
         }
@@ -60,7 +62,7 @@ namespace Code.EcsSystems
 
                 foreach (int entity in _balls)
                 {
-                    // float a = config.gravity * (totalMass - entity.Get2().mass) / (entity.Get<Position>().position - center).sqrMagnitude;
+                    // float a = config.gravity * (totalMass - _mass.Get(entity).mass) / (_pos.Get(entity)().position - center).sqrMagnitude;
                     float a = config.gravity;
                     _velocity.Get(entity).velocity -= _pos.Get(entity).position.normalized * (a * dt);
                 }
@@ -107,75 +109,73 @@ namespace Code.EcsSystems
                             continue;
                         if (_collAppl.Has(another)) 
                             continue;
-                        Entity<Velocity,Mass> entity_ = new Entity<Velocity, Mass>(world.PackEntityWithWorld(entity));
-                        Entity<Velocity,Mass> another_ = new Entity<Velocity, Mass>(world.PackEntityWithWorld(another));
-                        if (!DoDistanceGrow(entity_, another_, dt))
+                        if (!DoDistanceGrow(entity, another, dt))
                         {
-                            if (another_.Get<BallType>().config == entity_.Get<BallType>().config)
+                            if (_type.Get(another).config == _type.Get(entity).config)
                             {
-                                Merge(entity_, another_);
+                                Merge(entity, another);
                             }
                             else
                             {
-                                Bounce(entity_, another_);
+                                Bounce(entity, another);
                             }
 
-                            another_.Add<CollisionApplied>();
+                            _collAppl.Add(another);
                             break;
                         }
                     }
                 }
 
-                foreach (Entity<CollisionApplied> another in storage.Query<CollisionApplied>())
+                foreach (int another in _collAppls)
                 {
-                    another.Del1();
+                    _collAppl.Del(another);
                 }
             }
         }
 
-        private static void Merge(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2)
+        private void Merge(int b1, int b2)
         {
-            Vector2 myImpulse = b1.Get1().velocity * b1.Get2().mass;
-            Vector2 anotherImpulse = b2.Get1().velocity * b2.Get2().mass;
+            Vector2 myImpulse = _velocity.Get(b1).velocity * _mass.Get(b1).mass;
+            Vector2 anotherImpulse = _velocity.Get(b2).velocity * _mass.Get(b2).mass;
 
-            float totalMass = b1.Get2().mass + b2.Get2().mass;
+            float totalMass = _mass.Get(b1).mass + _mass.Get(b1).mass;
 
-            b1.Get<Position>().position = Vector2.Lerp(
-                b1.Get<Position>().position,
-                b2.Get<Position>().position,
+            _pos.Get(b1).position = Vector2.Lerp(
+                _pos.Get(b1).position,
+                _pos.Get(b2).position,
                 Mathf.InverseLerp(
-                    b1.Get2().mass,
-                    b2.Get2().mass,
+                    _mass.Get(b1).mass,
+                    _mass.Get(b2).mass,
                     totalMass / 2
                 )
             );
-            b1.Get1().velocity = (myImpulse + anotherImpulse) / totalMass;
-            b1.Get2().mass = b1.Get2().mass + b2.Get2().mass;
-            b1.Get<PushToScene>().requestCount++;
+            _velocity.Get(b1).velocity = (myImpulse + anotherImpulse) / totalMass;
+            _mass.Get(b1).mass = _mass.Get(b1).mass + _mass.Get(b2).mass;
+            _push.Get(b1).requestCount++;
 
-            b2.Add<BallDestroyAction>();
-            b2.Del<Mass>();
-            b2.Del<Velocity>();
+            _ballDestroy.Add(b2);
+            _mass.Del(b2);
+            _velocity.Del(b2);
         }
 
-        private void Bounce(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2)
+        private void Bounce(int b1, int b2)
         {
-            b1.Get1().velocity = ElasticImpactSpeed(
-                b1.Get<Position>().position, b1.Get1().velocity, b1.Get2().mass,
-                b2.Get<Position>().position, b2.Get1().velocity, b2.Get2().mass
+            _velocity.Get(b1).velocity = ElasticImpactSpeed(
+                _pos.Get(b1).position, _velocity.Get(b1).velocity, _mass.Get(b1).mass,
+                _pos.Get(b2).position, _velocity.Get(b2).velocity, _mass.Get(b2).mass
             );
-            b2.Get1().velocity = ElasticImpactSpeed(
-                b2.Get<Position>().position, b2.Get1().velocity, b2.Get2().mass,
-                b1.Get<Position>().position, b1.Get1().velocity, b1.Get2().mass
+            _velocity.Get(b2).velocity = ElasticImpactSpeed(
+                _pos.Get(b2).position, _velocity.Get(b2).velocity, _mass.Get(b2).mass,
+                _pos.Get(b1).position, _velocity.Get(b1).velocity, _mass.Get(b1).mass
             );
         }
 
-        private static bool DoDistanceGrow(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2, float dt)
+        private bool DoDistanceGrow(int b1, int b2, float dt)
         {
-            Vector2 p1 = b1.Get<Position>().position;
-            Vector2 p2 = b2.Get<Position>().position;
-            Vector2 v1 = b1.Get1().velocity;
-            Vector2 v2 = b2.Get1().velocity;
+            Vector2 p1 = _pos.Get(b1).position;
+            Vector2 p2 = _pos.Get(b2).position;
+            Vector2 v1 = _velocity.Get(b1).velocity;
+            Vector2 v2 = _velocity.Get(b2).velocity;
 
             return (p1 - p2).sqrMagnitude > (p1 - v1 * dt - (p2 - v2 * dt)).sqrMagnitude;
         }

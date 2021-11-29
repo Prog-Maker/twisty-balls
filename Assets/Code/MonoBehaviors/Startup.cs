@@ -36,7 +36,7 @@ public class Startup : MonoBehaviour
                 .Add(new BallInitSystem())
                 .Add(new RestartGameSystem())
                 .Add(new PhysicsSystem(_debugger.GetWorld()))
-                .Add(new CriticalMassExplosionSystem())
+                .Add(new CriticalMassExplosionSystem(_debugger.GetWorld()))
                 .Add(new BallDestroySystem())
                 // visualize
                 .Add(new BallPushToSceneSystem(_debugger.GetWorld()))
