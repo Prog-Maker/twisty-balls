@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68f5ded588b94db6a9fd99ae1c4f1d99, type: 3}
+  m_Name: Config
+  m_EditorClassIdentifier: 
+  initialSpawn:
+    maxCenterDistance: 954.3
+    ballNumber: 1008
+    ballSpeed: 546.5
+    ballMass: 1000
+  ballPrefab: {fileID: 6886748543666266063, guid: a5b1b1e5c9ef5c84bb5e11768880e076,
+    type: 3}
+  ballTypes:
+  - {fileID: 11400000, guid: 9bf0fed610fa0d44db6d15f735044cf4, type: 2}
+  - {fileID: 11400000, guid: 614989b5ed54b354d8e58eb7640d6f96, type: 2}
+  - {fileID: 11400000, guid: 8ca3f16fc2136114c9f90e140c82c58a, type: 2}
+  - {fileID: 11400000, guid: 661a177c89bfee04fb5fdf1681e90376, type: 2}
+  - {fileID: 11400000, guid: 2967a950de03b8449900b4c90005f076, type: 2}
+  - {fileID: 11400000, guid: 0556c2be5a8d28c4a86bffad95a507aa, type: 2}
+  - {fileID: 11400000, guid: ed33242fee48a6d41968360b41c345a7, type: 2}
+  movementStepCount: 1
+  gravity: 178.6
+  criticalMass: 4380
+  criticalExplosionSpeed: 538.6
+  cameraSize: 1618.97
+  radiusMultiplier: 1.48
