@@ -1,16 +1,33 @@
+using System;
 using Code.EcsComponents;
-using Kk.LeoQuery;
+using Code.Oop;
+using Code.Phases;
+using Kk.BusyEcs;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace Code.EcsSystems
 {
-    public class UserControlsSystem: ISystem
+    [EcsSystem]
+    public class UserControlsSystem
     {
-        public void Act(IEntityStorage storage)
+        private readonly Lazy<GUIStyle> _style = new Lazy<GUIStyle>(() => new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 32
+        });
+
+        private const int BufferSizeSeconds = 3;
+        private readonly FpsBuffer _fpsBuffer = new FpsBuffer(bufferSizeSeconds: BufferSizeSeconds, cacheTtl: 1);
+        
+        [Inject]
+        public IEnv env;
+        
+        [EarlyUpdate]
+        public void Act()
         {
             if (Input.GetKeyDown(KeyCode.F5))
             {
-                storage.NewEntity().Add<RestartGameCommand>();
+                env.NewEntity(new RestartGameCommand());
             }
 
             if (Input.GetKeyDown(KeyCode.Escape))

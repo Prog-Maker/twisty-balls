@@ -1,6 +1,5 @@
 using Code.EcsComponents;
 using Code.SO;
-using Kk.LeoQuery;
 using UnityEngine;
 
 namespace Code.Extensions

@@ -1,9 +1,11 @@
-﻿using Code.EcsComponents;
+﻿using System.Linq;
+using Code.EcsComponents;
 using Code.EcsSystems;
 using Code.MonoBehaviors;
+using Code.Phases;
 using Code.SO;
+using Kk.BusyEcs;
 using Kk.LeoHot;
-using Kk.LeoQuery;
 using Leopotam.EcsLite;
 using UnityEngine;
 
@@ -13,52 +15,63 @@ public class Startup : MonoBehaviour
 
     public Config config;
 
-    private LeoLiteStorage _storage;
-    private ISystem _update;
-    private ISystem _gui;
+    // private LeoLiteStorage _storage;
+    // private ISystem _update;
+    // private ISystem _gui;
 
-    private EcsSystems _debugger;
+    private EcsSystems _ecsSystems;
+    private IEcsContainer _ecs;
 
     private void OnEnable()
     {
-        _storage = new LeoLiteStorage();
+        // _storage = new LeoLiteStorage();
 
-        Injector injector = new Injector()
-            .Add(config);
+        _ecsSystems = new EcsSystems(new EcsWorld());
+        _ecsSystems.AddWorld(new EcsWorld(), "events");
+        
+        _ecs = new EcsContainerBuilder()
+            .Scan(typeof(Startup).Assembly)
+            // .ScanTypes(Resources.Load<ManualAssembly>("Scripts").scripts.Select(it => it.GetClass()))
+            .Integrate(_ecsSystems)
+            .Injectable(config)
+            .End();
 
-        InitEcsDebugger(_storage);
+        InitEcsDebugger();
+        _ecsSystems.Init();
 
-        _update = new MulticastSystem()
-                // input
-                .Add(new UserControlsSystem())
-                // update
-                .Add(new StartGameSystem())
-                .Add(new BallInitSystem())
-                .Add(new RestartGameSystem())
-                .Add(new PhysicsSystem())
-                .Add(new CriticalMassExplosionSystem())
-                .Add(new BallDestroySystem())
-                // visualize
-                .Add(new BallPushToSceneSystem())
-                .ForEach(injector.InjectInto)
-            ;
+        // _update = new MulticastSystem()
+        //         // input
+        //         .Add(new UserControlsSystem())
+        //         // update
+        //         .Add(new StartGameSystem())
+        //         .Add(new BallInitSystem())
+        //         .Add(new RestartGameSystem())
+        //         .Add(new PhysicsSystem())
+        //         .Add(new CriticalMassExplosionSystem())
+        //         .Add(new BallDestroySystem())
+        //         // visualize
+        //         .Add(new BallPushToSceneSystem())
+                // .ForEach(injector.InjectInto)
+            // ;
 
-        _gui = new MulticastSystem()
-                .Add(new HUDSystem())
-                .ForEach(injector.InjectInto)
+        // _gui = new MulticastSystem()
+        //         .Add(new HUDSystem())
+        //         .ForEach(injector.InjectInto)
             ;
 
         stash ??= new SerializableEcsUniverse();
 
-        stash.AddConverter<Entity, int>(
+        stash.AddConverter<EntityRef, int>(
             (runtime, ctx) =>
             {
-                if (!runtime.raw.Unpack(out EcsWorld world, out int entity))
+                if (!runtime.Deref(out Entity entity))
                 {
                     return 0;
                 }
+                
+                entity.GetRaw(out EcsWorld world, out var id);
 
-                TempEntityKey tempEntityKey = new TempEntityKey(ctx.worldToName[world], entity);
+                TempEntityKey tempEntityKey = new TempEntityKey(ctx.worldToName[world], id);
                 return ctx.entityToPackedId[tempEntityKey];
             },
             (persistent, ctx) =>
@@ -69,58 +82,53 @@ public class Startup : MonoBehaviour
                 }
 
                 TempEntityKey tempEntity = ctx.entityByPackedId[persistent];
-                return new Entity(ctx.worldByName[tempEntity.world ?? ""].PackEntityWithWorld(tempEntity.entity));
+                return new Entity(ctx.worldByName[tempEntity.world ?? ""], tempEntity.entity).AsRef();
             }
         );
 
-        stash.AddIncomingLink<EntityLink, Entity>(
+        stash.AddIncomingLink<EntityLink, EntityRef>(
             link => link.entity,
             (link, entity) => link.entity = entity
         );
 
         // debugger has all worlds
-        stash.UnpackState(_debugger);
+        stash.UnpackState(_ecsSystems);
     }
 
-    private void InitEcsDebugger(LeoLiteStorage storage)
+    private void InitEcsDebugger()
     {
-        EcsWorld[] rawWorlds = null;
-        storage.GetWorlds(ref rawWorlds);
 
-        _debugger = new EcsSystems(rawWorlds[0]);
-        
 #if UNITY_EDITOR
-        _debugger.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem());
-        for (var i = 1; i < rawWorlds.Length; i++)
+        _ecsSystems.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem());
+        foreach (var pair in _ecsSystems.GetAllNamedWorlds())
         {
-            var worldName = i.ToString();
-            _debugger.AddWorld(rawWorlds[i], worldName);
-            _debugger.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem(worldName));
+            _ecsSystems.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem(pair.Key));
         }
 #endif
-
-        _debugger.Init();
     }
 
     private void Start()
     {
-        _storage.NewEntity().Add<StartGameCommand>();
+        _ecs.NewEntity(new StartGameCommand());
     }
 
     private void Update()
     {
-        _debugger.Run();
-        _update.Act(_storage);
+        _ecs.Execute<EarlyUpdate>();
+        _ecs.Execute<Update>();
+        _ecs.Execute<LateUpdate>();
+        _ecs.Execute<Visualize>();
+        // _ecsSystems.Run();
     }
 
     private void OnGUI()
     {
-        _gui.Act(_storage);
+        _ecs.Execute<OnGUI>();
     }
 
     private void OnDisable()
     {
-        stash.PackState(_debugger);
-        _debugger.Destroy();
+        stash.PackState(_ecsSystems);
+        _ecsSystems.Destroy();
     }
 }

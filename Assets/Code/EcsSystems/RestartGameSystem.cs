@@ -1,23 +1,23 @@
 using Code.EcsComponents;
-using Kk.LeoQuery;
+using Code.Phases;
+using Kk.BusyEcs;
 
 namespace Code.EcsSystems
 {
-    public class RestartGameSystem : ISystem
+    [EcsSystem]
+    public class RestartGameSystem
     {
-        public void Act(IEntityStorage storage)
+        [Inject]
+        public IEnv env;
+        
+        [Update]
+        public void Act(Entity command, RestartGameCommand _)
         {
-            foreach (Entity<RestartGameCommand> command in storage.Query<RestartGameCommand>())
-            {
-                foreach (Entity<BallType> entity in storage.Query<BallType>())
-                {
-                    entity.Add(new BallDestroyAction());
-                }
+            env.Query((Entity entity, ref BallType _) => entity.Add(new BallDestroyAction()));
 
-                command.Destroy();
-                
-                storage.NewEntity().Add<StartGameCommand>();
-            }
+            command.DelEntity();
+
+            env.NewEntity(new StartGameCommand());
         }
     }
 }

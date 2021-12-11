@@ -1,18 +1,18 @@
 using Code.EcsComponents;
-using Kk.LeoQuery;
+using Code.Phases;
+using Kk.BusyEcs;
 using UnityEngine;
 
 namespace Code.EcsSystems
 {
-    public class BallDestroySystem: ISystem
+    [EcsSystem]
+    public class BallDestroySystem
     {
-        public void Act(IEntityStorage storage)
+        [LateUpdate]
+        public void Act(Entity entity, BallDestroyAction _)
         {
-            foreach (Entity<BallDestroyAction> entity in storage.Query<BallDestroyAction>())
-            {
-                Object.Destroy(entity.Get<Go>().go);
-                entity.Destroy();
-            }
+            Object.Destroy(entity.Get<Go>().go);
+            entity.DelEntity();
         }
     }
 }

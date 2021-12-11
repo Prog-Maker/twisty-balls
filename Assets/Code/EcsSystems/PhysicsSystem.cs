@@ -2,118 +2,117 @@ using System;
 using Code.EcsComponents;
 using Code.Extensions;
 using Code.MonoBehaviors;
+using Code.Phases;
 using Code.SO;
-using Kk.LeoQuery;
+using Kk.BusyEcs;
 using UnityEngine;
 
 namespace Code.EcsSystems
 {
-    public class PhysicsSystem : ISystem
+    [EcsSystem]
+    public class PhysicsSystem
     {
         [Serializable]
-        private struct CollisionApplied { }
+        public struct CollisionApplied { }
 
         [Inject]
         public Config config;
 
+        [Inject]
+        public IEnv env;
+
         private static Collider2D[] _results = new Collider2D[1024];
 
-        public void Act(IEntityStorage storage)
+        [Update]
+        public void Act()
         {
             int stepCount = config.movementStepCount;
-            float dt = Time.deltaTime / stepCount;
+            float dt = Constants.FixedDt / stepCount;
             for (int i = 0; i < stepCount; i++)
             {
                 int count = 0;
                 Vector2 center = Vector2.zero;
                 float totalMass = 0;
-                foreach (var entity in storage.Query<Mass>())
+                env.Query((ref Mass mass, ref Position position) =>
                 {
-                    totalMass += entity.Get1().mass;
-                    center += entity.Get<Position>().position;
+                    totalMass += mass.mass;
+                    center += position.position;
                     count++;
-                }
+                });
 
                 center /= count;
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                env.Query((ref Velocity velocity, ref Mass mass, ref Position position) =>
                 {
                     // float a = config.gravity * (totalMass - entity.Get2().mass) / (entity.Get<Position>().position - center).sqrMagnitude;
                     float a = config.gravity;
-                    entity.Get1().velocity -= entity.Get<Position>().position.normalized * (a * dt);
-                }
+                    velocity.velocity -= position.position.normalized * (a * dt);
+                });
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                env.Query((ref Velocity velocity, ref Mass mass, ref Position position) =>
                 {
-                    entity.Get<Position>().position += entity.Get1().velocity * dt;
-                }
+                    position.position += velocity.velocity * dt;
+                });
 
-                foreach (var entity in storage.Query<Velocity, Mass>())
+                env.Query((Entity entity, ref Velocity velocity, ref Mass mass, ref Position position) =>
                 {
-                    if (!entity.Has1() || !entity.Has2())
-                    {
-                        // because this loop can delete these components by reference from this loop
-                        continue;
-                    }
+                    // if (!entity.Has1() || !entity.Has2())
+                    // {
+                    //     // because this loop can delete these components by reference from this loop
+                    //     continue;
+                    // }
 
                     if (entity.Has<CollisionApplied>())
                     {
-                        continue;
+                        return;
                     }
 
-                    ref Position position = ref entity.Get<Position>();
-
-                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, entity.Get2().CalcBallDiameter(config) / 2, _results);
+                    int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, mass.CalcBallDiameter(config) / 2, _results);
                     for (int j = 0; j < collisionCount; j++)
                     {
-                        if (_results[j].TryGetComponent(out EntityLink link)
-                            && link.entity.TryGet(out Entity<Velocity, Mass> another)
-                            && another != entity
-                            && !another.Has<BallDestroyAction>()
-                            && !another.Has<CollisionApplied>()
-                            && !DoDistanceGrow(entity, another, dt)
-                        )
+                        if (!_results[j].TryGetComponent(out EntityLink link)) continue;
+                        if (!link.entity.Deref(out Entity another)) continue;
+                        if (!another.Has<Mass>() || !another.Has<Velocity>()) continue;
+                        if (another == entity) continue;
+                        if (another.Has<BallDestroyAction>()) continue;
+                        if (another.Has<CollisionApplied>()) continue;
+                        if (DoDistanceGrow(entity, another, dt)) continue;
+                        if (another.Get<BallType>().config == entity.Get<BallType>().config)
                         {
-                            if (another.Get<BallType>().config == entity.Get<BallType>().config)
-                            {
-                                Merge(entity, another);
-                            }
-                            else
-                            {
-                                Bounce(entity, another);
-                            }
-
-                            another.Add<CollisionApplied>();
-                            break;
+                            Merge(entity, another);
                         }
-                    }
-                }
+                        else
+                        {
+                            Bounce(entity, another);
+                        }
 
-                foreach (Entity<CollisionApplied> another in storage.Query<CollisionApplied>())
-                {
-                    another.Del1();
-                }
+                        another.Add<CollisionApplied>();
+                        break;
+                    }
+                });
+
+                env.Query((Entity another, ref CollisionApplied _) => another.Del<CollisionApplied>());
             }
         }
 
-        private static void Merge(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2)
+        private static void Merge(Entity b1, Entity b2)
         {
-            Vector2 myImpulse = b1.Get1().velocity * b1.Get2().mass;
-            Vector2 anotherImpulse = b2.Get1().velocity * b2.Get2().mass;
+            Vector2 myImpulse = b1.Get<Velocity>().velocity * b1.Get<Mass>().mass;
+            Vector2 anotherImpulse = b2.Get<Velocity>().velocity * b2.Get<Mass>().mass;
 
-            float totalMass = b1.Get2().mass + b2.Get2().mass;
+            float totalMass = b1.Get<Mass>().mass + b2.Get<Mass>().mass;
 
             b1.Get<Position>().position = Vector2.Lerp(
                 b1.Get<Position>().position,
                 b2.Get<Position>().position,
                 Mathf.InverseLerp(
-                    b1.Get2().mass,
-                    b2.Get2().mass,
+                    b1.Get<Mass>().mass,
+                    b2.Get<Mass>().mass,
                     totalMass / 2
                 )
             );
-            b1.Get1().velocity = (myImpulse + anotherImpulse) / totalMass;
-            b1.Get2().mass = b1.Get2().mass + b2.Get2().mass;
+            b1.Get<Velocity>().velocity = (myImpulse + anotherImpulse) / totalMass;
+            b1.Get<Mass>().mass = b1.Get<Mass>().mass + b2.Get<Mass>().mass;
             b1.Get<PushToScene>().requestCount++;
 
             b2.Add<BallDestroyAction>();
@@ -121,24 +120,24 @@ namespace Code.EcsSystems
             b2.Del<Velocity>();
         }
 
-        private void Bounce(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2)
+        private void Bounce(Entity b1, Entity b2)
         {
-            b1.Get1().velocity = ElasticImpactSpeed(
-                b1.Get<Position>().position, b1.Get1().velocity, b1.Get2().mass,
-                b2.Get<Position>().position, b2.Get1().velocity, b2.Get2().mass
+            b1.Get<Velocity>().velocity = ElasticImpactSpeed(
+                b1.Get<Position>().position, b1.Get<Velocity>().velocity, b1.Get<Mass>().mass,
+                b2.Get<Position>().position, b2.Get<Velocity>().velocity, b2.Get<Mass>().mass
             );
-            b2.Get1().velocity = ElasticImpactSpeed(
-                b2.Get<Position>().position, b2.Get1().velocity, b2.Get2().mass,
-                b1.Get<Position>().position, b1.Get1().velocity, b1.Get2().mass
+            b2.Get<Velocity>().velocity = ElasticImpactSpeed(
+                b2.Get<Position>().position, b2.Get<Velocity>().velocity, b2.Get<Mass>().mass,
+                b1.Get<Position>().position, b1.Get<Velocity>().velocity, b1.Get<Mass>().mass
             );
         }
 
-        private static bool DoDistanceGrow(Entity<Velocity, Mass> b1, Entity<Velocity, Mass> b2, float dt)
+        private static bool DoDistanceGrow(Entity b1, Entity b2, float dt)
         {
             Vector2 p1 = b1.Get<Position>().position;
             Vector2 p2 = b2.Get<Position>().position;
-            Vector2 v1 = b1.Get1().velocity;
-            Vector2 v2 = b2.Get1().velocity;
+            Vector2 v1 = b1.Get<Velocity>().velocity;
+            Vector2 v2 = b2.Get<Velocity>().velocity;
             
             return (p1 - p2).sqrMagnitude > (p1 - v1 * dt - (p2 - v2 * dt)).sqrMagnitude;
         }
