@@ -31,7 +31,7 @@ namespace Code.Systems
         public void Run(EcsSystems systems)
         {
             int stepCount = _config.movementStepCount;
-            float dt = Time.deltaTime / stepCount;
+            float dt = Constants.FixedDt;
             for (int i = 0; i < stepCount; i++)
             {
                 int count = 0;
