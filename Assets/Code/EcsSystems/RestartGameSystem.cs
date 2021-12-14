@@ -13,7 +13,10 @@ namespace Code.EcsSystems
         [Update]
         public void Act(Entity command, RestartGameCommand _)
         {
-            env.Query((Entity entity, ref BallType _) => entity.Add(new BallDestroyAction()));
+            env.Query((Entity entity, ref BallType _) =>
+            {
+                entity.Add(new BallDestroyAction());
+            });
 
             command.DelEntity();
 

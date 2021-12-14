@@ -1,5 +1,6 @@
 using Code.EcsComponents;
 using Code.Extensions;
+using Code.Phases;
 using Code.SO;
 using Kk.BusyEcs;
 using UnityEngine;
@@ -16,27 +17,26 @@ namespace Code.EcsSystems
         [Inject]
         public IEnv env;
         
-        public void Act(Entity entity, Mass mass)
+        [Update]
+        public void Act(Entity entity, ref Mass mass, ref Position position)
         {
+            if (mass.mass > config.criticalMass)
             {
-                if (mass.mass > config.criticalMass)
-                {
-                    entity.Add<BallDestroyAction>();
-                    
-                    float diameter = mass.CalcBallDiameter(config);
+                entity.Add<BallDestroyAction>();
+                
+                float diameter = mass.CalcBallDiameter(config);
 
-                    foreach (BallTypeConfig ballType in config.ballTypes)
-                    {
-                        Vector2 offset = Random.insideUnitCircle * diameter;
-                        env.NewEntity(new BallInitAction(
-                            name: "fragment",
-                            position: entity.Get<Position>().position + offset,
-                            direction: offset.normalized,
-                            speed: config.criticalExplosionSpeed,
-                            mass: mass.mass / config.ballTypes.Length,
-                            ballType
-                        ));
-                    }
+                foreach (BallTypeConfig ballType in config.ballTypes)
+                {
+                    Vector2 offset = Random.insideUnitCircle * diameter;
+                    env.NewEntity(new BallInitAction(
+                        name: "fragment",
+                        position: position.position + offset,
+                        direction: offset.normalized,
+                        speed: config.criticalExplosionSpeed,
+                        mass: mass.mass / config.ballTypes.Length,
+                        ballType
+                    ));
                 }
             }
         }

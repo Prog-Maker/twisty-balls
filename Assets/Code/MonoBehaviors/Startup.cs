@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Code.EcsComponents;
 using Code.EcsSystems;
+using Code.GenSupport;
 using Code.MonoBehaviors;
 using Code.Phases;
 using Code.SO;
@@ -20,7 +22,8 @@ public class Startup : MonoBehaviour
     // private ISystem _gui;
 
     private EcsSystems _ecsSystems;
-    private IEcsContainer _ecs;
+    // private IEcsContainer _ecs;
+    private IConfigurableEcsContainer _ecs;
 
     private void OnEnable()
     {
@@ -28,13 +31,17 @@ public class Startup : MonoBehaviour
 
         _ecsSystems = new EcsSystems(new EcsWorld());
         _ecsSystems.AddWorld(new EcsWorld(), "events");
-        
-        _ecs = new EcsContainerBuilder()
-            .Scan(typeof(Startup).Assembly)
-            // .ScanTypes(Resources.Load<ManualAssembly>("Scripts").scripts.Select(it => it.GetClass()))
-            .Integrate(_ecsSystems)
-            .Injectable(config)
-            .End();
+
+        // _ecs = new NaiveConfigurableEcsContainer();
+        _ecs = (IConfigurableEcsContainer)Activator.CreateInstance(GetType().Assembly.GetType("GeneratedEcsContainer"));
+        _ecs.AddInjectable(config);
+        _ecs.Init(_ecsSystems);
+            // new EcsContainerBuilder()
+            // .Scan(typeof(Startup).Assembly)
+            // // .ScanTypes(Resources.Load<ManualAssembly>("Scripts").scripts.Select(it => it.GetClass()))
+            // .Integrate(_ecsSystems)
+            // .Injectable(config)
+            // .End();
 
         InitEcsDebugger();
         _ecsSystems.Init();

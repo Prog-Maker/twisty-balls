@@ -19,7 +19,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e0ae590ddca643e8f65e454b9088d2129701195e"
+      "hash": "9c63c1c0b7915e604de17c7315f684fb9f35fd6c"
     },
     "com.nplekhanov.csx.core": {
       "version": "https://gitlab.com/kkolyan/csx-core.git",

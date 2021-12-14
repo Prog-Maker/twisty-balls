@@ -1,9 +1,11 @@
 using System;
 using Code.SO;
+using Kk.BusyEcs;
 using UnityEngine;
 
 namespace Code.EcsComponents
 {
+    [EcsWorld("events")]
     [Serializable]
     public struct BallInitAction
     {
