@@ -15,7 +15,10 @@ namespace Code.EcsSystems
         {
             env.Query((Entity entity, ref BallType _) =>
             {
-                entity.Add(new BallDestroyAction());
+                if (!entity.Has<BallDestroyAction>())
+                {
+                    entity.Add(new BallDestroyAction());
+                }
             });
 
             command.DelEntity();

@@ -352,6 +352,11 @@ namespace Code.GenSupport
 
                 s += ".End();";
                 s += "foreach (var id in filter) {";
+                for (int i = 1; i <= componentCount; i++)
+                {
+                    s += $"if (!w.GetPool<T{i}>().Has(id)) continue;";
+                }
+
                 s += "callback(";
                 for (int i = 1; i <= componentCount; i++)
                 {
@@ -364,6 +369,30 @@ namespace Code.GenSupport
                 s += "}";
                 s += "}";
                 s += "public void Query<" + gsig + ">(EntityCallback<" + gsig + "> callback) " + where + "{";
+                s += "foreach (EcsWorld w in allWorlds) {";
+                
+                s += "EcsFilter filter = w.Filter<T1>()";
+                for (int i = 2; i <= componentCount; i++)
+                {
+                    s += ".Inc<T" + i + ">()";
+                }
+
+                s += ".End();";
+                s += "foreach (var id in filter) {";
+                for (int i = 1; i <= componentCount; i++)
+                {
+                    s += $"if (!w.GetPool<T{i}>().Has(id)) continue;";
+                }
+                s += "callback(new Entity(w, id), ";
+                for (int i = 1; i <= componentCount; i++)
+                {
+                    if (i > 1) s += ",";
+                    s += "ref w.GetPool<T"+i+">().Get(id)";
+                }
+                s += ");";
+                s += "}";
+
+                s += "}";
                 s += "}";
             }
 
