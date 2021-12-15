@@ -1,7 +1,7 @@
 using System;
 using Kk.BusyEcs;
 
-namespace Code.GenSupport
+namespace Kk.BusyEcs
 {
     public class NaiveConfigurableEcsContainer : IConfigurableEcsContainer
     {

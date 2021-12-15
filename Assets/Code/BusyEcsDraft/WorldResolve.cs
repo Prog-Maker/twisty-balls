@@ -2,8 +2,9 @@ using System;
 using System.Reflection;
 using Kk.BusyEcs;
 
-namespace Code.GenSupport
+namespace Kk.BusyEcs
 {
+    // used by generated code
     public class WorldResolve
     {
         public static string ResolveWorldName(params Type[] componentTypes)

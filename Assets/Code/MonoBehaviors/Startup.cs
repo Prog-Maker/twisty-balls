@@ -1,8 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using Kk.BusyEcs;
 using Code.EcsComponents;
-using Code.EcsSystems;
-using Code.GenSupport;
 using Code.MonoBehaviors;
 using Code.Phases;
 using Code.SO;
@@ -10,6 +7,9 @@ using Kk.BusyEcs;
 using Kk.LeoHot;
 using Leopotam.EcsLite;
 using UnityEngine;
+#if UNITY_EDITOR
+using Leopotam.EcsLite.UnityEditor;
+#endif
 
 public class Startup : MonoBehaviour
 {
@@ -22,6 +22,7 @@ public class Startup : MonoBehaviour
     // private ISystem _gui;
 
     private EcsSystems _ecsSystems;
+
     // private IEcsContainer _ecs;
     private IConfigurableEcsContainer _ecs;
 
@@ -33,15 +34,15 @@ public class Startup : MonoBehaviour
         _ecsSystems.AddWorld(new EcsWorld(), "events");
 
         // _ecs = new NaiveConfigurableEcsContainer();
-        _ecs = (IConfigurableEcsContainer)Activator.CreateInstance(GetType().Assembly.GetType("GeneratedEcsContainer"));
+        _ecs = EcsContainerFactory.NewInstance(new[] { GetType().Assembly });
         _ecs.AddInjectable(config);
         _ecs.Init(_ecsSystems);
-            // new EcsContainerBuilder()
-            // .Scan(typeof(Startup).Assembly)
-            // // .ScanTypes(Resources.Load<ManualAssembly>("Scripts").scripts.Select(it => it.GetClass()))
-            // .Integrate(_ecsSystems)
-            // .Injectable(config)
-            // .End();
+        // new EcsContainerBuilder()
+        // .Scan(typeof(Startup).Assembly)
+        // // .ScanTypes(Resources.Load<ManualAssembly>("Scripts").scripts.Select(it => it.GetClass()))
+        // .Integrate(_ecsSystems)
+        // .Injectable(config)
+        // .End();
 
         InitEcsDebugger();
         _ecsSystems.Init();
@@ -58,13 +59,13 @@ public class Startup : MonoBehaviour
         //         .Add(new BallDestroySystem())
         //         // visualize
         //         .Add(new BallPushToSceneSystem())
-                // .ForEach(injector.InjectInto)
-            // ;
+        // .ForEach(injector.InjectInto)
+        // ;
 
         // _gui = new MulticastSystem()
         //         .Add(new HUDSystem())
         //         .ForEach(injector.InjectInto)
-            ;
+        ;
 
         stash ??= new SerializableEcsUniverse();
 
@@ -75,7 +76,7 @@ public class Startup : MonoBehaviour
                 {
                     return 0;
                 }
-                
+
                 entity.GetRaw(out EcsWorld world, out var id);
 
                 TempEntityKey tempEntityKey = new TempEntityKey(ctx.worldToName[world], id);
@@ -104,12 +105,11 @@ public class Startup : MonoBehaviour
 
     private void InitEcsDebugger()
     {
-
 #if UNITY_EDITOR
-        _ecsSystems.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem());
+        _ecsSystems.Add(new EcsWorldDebugSystem());
         foreach (var pair in _ecsSystems.GetAllNamedWorlds())
         {
-            _ecsSystems.Add(new Leopotam.EcsLite.UnityEditor.EcsWorldDebugSystem(pair.Key));
+            _ecsSystems.Add(new EcsWorldDebugSystem(pair.Key));
         }
 #endif
     }

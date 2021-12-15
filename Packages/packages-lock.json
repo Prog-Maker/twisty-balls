@@ -35,6 +35,13 @@
       "dependencies": {},
       "hash": "56c675c7bdf132b3ce7d4b42031e60de1224a537"
     },
+    "com.unity.code-analysis": {
+      "version": "https://github.com/needle-mirror/com.unity.code-analysis.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d79d036a24852f45cebb4e1f7ace3e805c95fede"
+    },
     "com.unity.collab-proxy": {
       "version": "1.5.7",
       "depth": 0,

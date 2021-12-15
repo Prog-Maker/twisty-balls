@@ -1,32 +1,33 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Kk.BusyEcs;
-using UnityEditor;
+using UnityEngine;
 
-namespace Code.GenSupport
+namespace Kk.BusyEcs
 {
-    public static class EcsContainerGenerator
+    public static class EcsContainerSourcesGenerator
     {
-        const string ClassName = "GeneratedEcsContainer";
         const int NewEntityMaxComponentCount = 8;
         const int QueryMaxComponentCount = 4;
 
-        [MenuItem("My Tools/Generate ECS container")]
-        public static void TestGenerateSystemsGlue()
+        public class Result
         {
-            File.WriteAllText($"Assets/Code/{ClassName}.gen.cs", GenerateEcsContainer());
+            public readonly string source;
+
+            public Result(string source)
+            {
+                this.source = source;
+            }
         }
 
-        public static string GenerateEcsContainer()
+        public static Result GenerateEcsContainer(IEnumerable<Assembly> assembliesToScan)
         {
             Context context = new Context();
-            Scan(context);
+            Scan(context, assembliesToScan);
 
-            return GenerateBody(context);
+            return new Result(GenerateBody(context));
         }
 
         public class Injection
@@ -46,29 +47,29 @@ namespace Code.GenSupport
             public List<string> worlds = new List<string>();
         }
 
-        public static string GenerateBody(Context ctx)
+        private static string GenerateBody(Context ctx)
         {
             string s = "";
-            s += "using System;";
-            s += "using System.Collections.Generic;";
-            s += "using Kk.BusyEcs;";
-            s += "using Leopotam.EcsLite;";
-            s += "using System.Reflection;";
-            s += "[UnityEngine.Scripting.Preserve]";
-            s += "public class " + ClassName + " : Code.GenSupport.IConfigurableEcsContainer {";
+            s += "using System;\n";
+            s += "using System.Collections.Generic;\n";
+            s += "using Kk.BusyEcs;\n";
+            s += "using Leopotam.EcsLite;\n";
+            s += "using System.Reflection;\n";
+            s += "[UnityEngine.Scripting.Preserve]\n";
+            s += "public class " + CodeGenConstants.ClassName + " : Kk.BusyEcs.IConfigurableEcsContainer {\n";
             s += GenerateFields(ctx);
-            s += "  public " + ClassName + "() {";
+            s += "  public " + CodeGenConstants.ClassName + "() {\n";
             s += GenerateConstructor(ctx);
-            s += "  }";
-            s += "  public void Init(EcsSystems worlds) {";
+            s += "  }\n";
+            s += "  public void Init(EcsSystems worlds) {\n";
             s += GenerateInit(ctx);
-            s += "  }";
-            s += "  public void Execute<T>() where T : Attribute {";
-            s += "    _phaseExecutionByType[typeof(T)]();";
-            s += "  }";
+            s += "  }\n";
+            s += "  public void Execute<T>() where T : Attribute {\n";
+            s += "    _phaseExecutionByType[typeof(T)]();\n";
+            s += "  }\n";
             s += GenerateMethods(ctx);
             s += GenerateNestedClasses(ctx);
-            s += "}";
+            s += "}\n";
             return s;
         }
 
@@ -76,27 +77,27 @@ namespace Code.GenSupport
         {
             string s = "";
 
-            s += "private readonly Dictionary<Type, Action> _phaseExecutionByType = new Dictionary<Type, Action>();";
-            s += "private EcsSystems worlds;";
-            s += "private Dictionary<Type, object> injectables = new Dictionary<Type, object>();";
-            s += "private List<EcsWorld> allWorlds = new List<EcsWorld>();";
+            s += "  private readonly Dictionary<Type, Action> _phaseExecutionByType = new Dictionary<Type, Action>();\n";
+            s += "  private EcsSystems worlds;\n";
+            s += "  private Dictionary<Type, object> injectables = new Dictionary<Type, object>();\n";
+            s += "  private List<EcsWorld> allWorlds = new List<EcsWorld>();\n";
 
             foreach (Type systemClass in ctx.systemClasses)
             {
-                s += "private " + systemClass.FullName + " " + SystemInstanceVar(systemClass) + ";";
+                s += "  private " + systemClass.FullName + " " + SystemInstanceVar(systemClass) + ";\n";
             }
 
             foreach (string world in ctx.worlds)
             {
-                s += "private EcsWorld " + WorldVar(world) + ";";
+                s += "  private EcsWorld " + WorldVar(world) + ";\n";
                 foreach (Type componentType in ctx.components)
                 {
-                    s += "private EcsPool<" + componentType.FullName + "> " + PoolVar(world, componentType) + ";";
+                    s += "  private EcsPool<" + componentType.FullName + "> " + PoolVar(world, componentType) + ";\n";
                 }
 
                 foreach (List<Type> pair in ctx.filters)
                 {
-                    s += "private EcsFilter " + FilterName(world, pair) + ";";
+                    s += "  private EcsFilter " + FilterName(world, pair) + ";\n";
                 }
             }
 
@@ -111,47 +112,47 @@ namespace Code.GenSupport
         private static string GenerateInit(Context ctx)
         {
             string s = "";
-            s += "this.worlds = worlds;";
+            s += "    this.worlds = worlds;\n";
             foreach (Type systemClass in ctx.systemClasses)
             {
-                s += SystemInstanceVar(systemClass) + " = new " + systemClass.FullName + " ();";
+                s += "    " + SystemInstanceVar(systemClass) + " = new " + systemClass.FullName + " ();\n";
             }
 
             foreach (string world in ctx.worlds)
             {
                 if (world == "")
                 {
-                    s += WorldVar(world) + " = worlds.GetWorld();";
+                    s += "    " + WorldVar(world) + " = worlds.GetWorld();\n";
                 }
                 else
                 {
-                    s += "if (worlds.GetWorld(\"" + world + "\") == null) { worlds.AddWorld(new EcsWorld(), \"" + world + "\");}";
-                    s += WorldVar(world) + " = worlds.GetWorld(\"" + world + "\");";
+                    s += "    if (worlds.GetWorld(\"" + world + "\") == null) { worlds.AddWorld(new EcsWorld(), \"" + world + "\"); }\n";
+                    s += "    " + WorldVar(world) + " = worlds.GetWorld(\"" + world + "\");\n";
                 }
 
-                s += "allWorlds.Add(" + WorldVar(world) + ");";
+                s += "    allWorlds.Add(" + WorldVar(world) + ");\n";
 
                 foreach (Type componentType in ctx.components)
                 {
-                    s += PoolVar(world, componentType) + " = " + WorldVar(world) + ".GetPool<" + componentType.FullName + ">();";
+                    s += "    " + PoolVar(world, componentType) + " = " + WorldVar(world) + ".GetPool<" + componentType.FullName + ">();\n";
                 }
 
                 foreach (List<Type> pair in ctx.filters)
                 {
-                    s += FilterName(world, pair) + " = " + WorldVar(world) + ".Filter<" + pair[0].FullName + ">()";
+                    s += "    " + FilterName(world, pair) + " = " + WorldVar(world) + ".Filter<" + pair[0].FullName + ">()";
                     for (var i = 1; i < pair.Count; i++)
                     {
                         s += ".Inc<" + pair[i] + ">()";
                     }
 
-                    s += ".End();";
+                    s += ".End();\n";
                 }
             }
 
             foreach (Injection injection in ctx.injections)
             {
-                s += SystemInstanceVar(injection.system) + "." + injection.field + " = (" + injection.type.FullName + ") ResolveInjectable<" +
-                     injection.type.FullName + ">();";
+                s += "    " + SystemInstanceVar(injection.system) + "." + injection.field + " = (" + injection.type.FullName + ") ResolveInjectable<" +
+                     injection.type.FullName + ">();\n";
             }
 
             return s;
@@ -181,16 +182,16 @@ namespace Code.GenSupport
         {
             long nextVarId = 0;
             string s = "";
-            s += "AddInjectable(this, typeof(IEnv));";
-            s += "typeof(Entity).GetField(\"env\", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, this);";
+            s += "    AddInjectable(this, typeof(IEnv));\n";
+            s += "    typeof(Entity).GetField(\"env\", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, this);\n";
             foreach (KeyValuePair<Type, List<MethodInfo>> pair in ctx.systemsByPhase)
             {
-                s += "_phaseExecutionByType[typeof(" + pair.Key.FullName + ")] = () => {";
+                s += "    _phaseExecutionByType[typeof(" + pair.Key.FullName + ")] = () => {\n";
                 foreach (MethodInfo method in pair.Value)
                 {
                     if (method.GetParameters().Length <= 0)
                     {
-                        s += SystemInstanceVar(method.DeclaringType) + "." + method.Name + "();";
+                        s += "      " + SystemInstanceVar(method.DeclaringType) + "." + method.Name + "();\n";
                     }
                     else
                     {
@@ -218,8 +219,8 @@ namespace Code.GenSupport
                         foreach (string world in ctx.worlds)
                         {
                             string entityVar = "entity" + nextVarId++;
-                            s += "foreach (var " + entityVar + " in " + FilterName(world, components) + ") {";
-                            s += SystemInstanceVar(method.DeclaringType) + "." + method.Name + "(";
+                            s += "      foreach (var " + entityVar + " in " + FilterName(world, components) + ") {\n";
+                            s += "        " + SystemInstanceVar(method.DeclaringType) + "." + method.Name + "(";
                             if (supplyEntity) { }
 
                             bool first = true;
@@ -255,13 +256,13 @@ namespace Code.GenSupport
                                 }
                             }
 
-                            s += ");";
-                            s += "}";
+                            s += ");\n";
+                            s += "      }\n";
                         }
                     }
                 }
 
-                s += "};";
+                s += "    };\n";
             }
 
             return s;
@@ -271,19 +272,19 @@ namespace Code.GenSupport
         private static string GenerateMethods(Context ctx)
         {
             string s = "";
-            s += "  public void AddInjectable(object injectable, Type overrideType = null)";
-            s += "  {";
-            s += "    injectables[overrideType ?? injectable.GetType()] = injectable;";
-            s += "  }";
-            s += "  private object ResolveInjectable<T>()";
-            s += "  {";
-            s += "    if (!injectables.TryGetValue(typeof(T), out var injectable))";
-            s += "    {";
-            s += "        throw new Exception(\"failed to resolve injection of \" + typeof(T).FullName);";
-            s += "    }";
-            s += "    ";
-            s += "    return injectable;";
-            s += "  }";
+            s += "  public void AddInjectable(object injectable, Type overrideType = null)\n";
+            s += "  {\n";
+            s += "    injectables[overrideType ?? injectable.GetType()] = injectable;\n";
+            s += "  }\n";
+            s += "  private object ResolveInjectable<T>()\n";
+            s += "  {\n";
+            s += "    if (!injectables.TryGetValue(typeof(T), out var injectable))\n";
+            s += "    {\n";
+            s += "        throw new Exception(\"failed to resolve injection of \" + typeof(T).FullName);\n";
+            s += "    }\n";
+            s += "    \n";
+            s += "    return injectable;\n";
+            s += "  }\n";
 
             for (int componentCount = 1; componentCount <= NewEntityMaxComponentCount; componentCount++)
             {
@@ -296,32 +297,33 @@ namespace Code.GenSupport
                     gsig += "T" + i;
                 }
 
-                s += "public Entity NewEntity<" + gsig + ">(";
+                s += "  public Entity NewEntity<" + gsig + ">(";
 
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ", ";
                     s += "in T" + i + " c" + i;
+                    // s += "T" + i + " c" + i;
                 }
 
-                s += ") ";
+                s += ") \n";
 
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    s += " where T" + i + " : struct ";
+                    s += "    where T" + i + " : struct \n";
                 }
 
 
-                s += " {";
-                s += "EcsWorld w = worlds.GetWorld(WorldName<" + gsig + ">.worldName);";
-                s += "var id = w.NewEntity();";
+                s += "  {\n";
+                s += "    EcsWorld w = worlds.GetWorld(WorldName<" + gsig + ">.worldName);\n";
+                s += "    var id = w.NewEntity();\n";
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    s += "w.GetPool<T" + i + ">().Add(id) = c" + i + ";";
+                    s += "    w.GetPool<T" + i + ">().Add(id) = c" + i + ";\n";
                 }
 
-                s += "return new Entity(w, id);";
-                s += "}";
+                s += "    return new Entity(w, id);\n";
+                s += "  }\n";
             }
 
             for (int componentCount = 1; componentCount <= QueryMaxComponentCount; componentCount++)
@@ -338,62 +340,65 @@ namespace Code.GenSupport
 
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    where += " where T" + i + " : struct ";
+                    where += "    where T" + i + " : struct \n";
                 }
 
-                s += "public void Query<" + gsig + ">(SimpleCallback<" + gsig + "> callback) " + where + " {";
-                s += "foreach (EcsWorld w in allWorlds) {";
-                
-                s += "EcsFilter filter = w.Filter<T1>()";
+                s += "  public void Query<" + gsig + ">(SimpleCallback<" + gsig + "> callback)\n" + where + "  {\n";
+                s += "    foreach (EcsWorld w in allWorlds) {\n";
+
+                s += "      EcsFilter filter = w.Filter<T1>()";
                 for (int i = 2; i <= componentCount; i++)
                 {
                     s += ".Inc<T" + i + ">()";
                 }
 
-                s += ".End();";
-                s += "foreach (var id in filter) {";
+                s += ".End();\n";
+                s += "      foreach (var id in filter) {\n";
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    s += $"if (!w.GetPool<T{i}>().Has(id)) continue;";
+                    s += $"        if (!w.GetPool<T{i}>().Has(id)) continue;\n";
                 }
 
-                s += "callback(";
+                s += "        callback(";
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ",";
-                    s += "ref w.GetPool<T"+i+">().Get(id)";
+                    s += "ref w.GetPool<T" + i + ">().Get(id)";
                 }
-                s += ");";
-                s += "}";
 
-                s += "}";
-                s += "}";
-                s += "public void Query<" + gsig + ">(EntityCallback<" + gsig + "> callback) " + where + "{";
-                s += "foreach (EcsWorld w in allWorlds) {";
-                
-                s += "EcsFilter filter = w.Filter<T1>()";
+                s += ");\n";
+                s += "      }\n";
+
+                s += "    }\n";
+                s += "  }\n";
+                s += "  public void Query<" + gsig + ">(EntityCallback<" + gsig + "> callback)\n" + where + "  {\n";
+                s += "    foreach (EcsWorld w in allWorlds) {\n";
+
+                s += "      EcsFilter filter = w.Filter<T1>()";
                 for (int i = 2; i <= componentCount; i++)
                 {
                     s += ".Inc<T" + i + ">()";
                 }
 
-                s += ".End();";
-                s += "foreach (var id in filter) {";
+                s += ".End();\n";
+                s += "      foreach (var id in filter) {\n";
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    s += $"if (!w.GetPool<T{i}>().Has(id)) continue;";
+                    s += $"        if (!w.GetPool<T{i}>().Has(id)) continue;\n";
                 }
-                s += "callback(new Entity(w, id), ";
+
+                s += "        callback(new Entity(w, id), ";
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ",";
-                    s += "ref w.GetPool<T"+i+">().Get(id)";
+                    s += "ref w.GetPool<T" + i + ">().Get(id)";
                 }
-                s += ");";
-                s += "}";
 
-                s += "}";
-                s += "}";
+                s += ");\n";
+                s += "      }\n";
+
+                s += "    }\n";
+                s += "  }\n";
             }
 
             for (int componentCount = 1; componentCount <= QueryMaxComponentCount; componentCount++)
@@ -410,44 +415,46 @@ namespace Code.GenSupport
 
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    where += " where T" + i + " : struct ";
+                    where += "    where T" + i + " : struct \n";
                 }
 
-                s += "public bool Match<"+gsig+">(Entity entity, SimpleCallback<"+gsig+"> callback) " + where +" {";
+                s += "  public bool Match<" + gsig + ">(Entity entity, SimpleCallback<" + gsig + "> callback)\n" + where + "  {\n";
                 for (int i = 1; i <= componentCount; i++)
                 {
-                    s += $"if (!entity.Has<T{i}>()) return false;";
+                    s += $"    if (!entity.Has<T{i}>()) return false;\n";
                 }
 
-                s += "callback(";
-                for (int i = 1; i <= componentCount; i++)
-                {
-                    if (i > 1) s += ",";
-                    s += "ref entity.Get<T"+i+">()";
-                }
-                s += ");";
-                s += "return true;";
-
-                s += "}";
-
-                s += "public bool Match<"+gsig+">(Entity entity, EntityCallback<"+gsig+"> callback) " + where +" {";
-                for (int i = 1; i <= componentCount; i++)
-                {
-                    s += $"if (!entity.Has<T{i}>()) return false;";
-                }
-
-                s += "callback(entity, ";
+                s += "    callback(";
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ",";
-                    s += "ref entity.Get<T"+i+">()";
+                    s += "ref entity.Get<T" + i + ">()";
                 }
-                s += ");";
-                s += "return true;";
 
-                s += "}";
+                s += ");\n";
+                s += "    return true;\n";
+
+                s += "  }\n";
+
+                s += "  public bool Match<" + gsig + ">(Entity entity, EntityCallback<" + gsig + "> callback)\n" + where + "  {\n";
+                for (int i = 1; i <= componentCount; i++)
+                {
+                    s += $"    if (!entity.Has<T{i}>()) return false;\n";
+                }
+
+                s += "    callback(entity, ";
+                for (int i = 1; i <= componentCount; i++)
+                {
+                    if (i > 1) s += ",";
+                    s += "ref entity.Get<T" + i + ">()";
+                }
+
+                s += ");\n";
+                s += "    return true;\n";
+
+                s += "  }\n";
             }
-            
+
 
             return s;
         }
@@ -458,7 +465,7 @@ namespace Code.GenSupport
 
             for (int componentCount = 1; componentCount <= NewEntityMaxComponentCount; componentCount++)
             {
-                s += "private static class WorldName<";
+                s += "  private static class WorldName<";
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ", ";
@@ -466,8 +473,8 @@ namespace Code.GenSupport
                     s += "T" + i;
                 }
 
-                s += "> {";
-                s += "internal static readonly string worldName = Code.GenSupport.WorldResolve.ResolveWorldName(";
+                s += "> {\n";
+                s += "    internal static readonly string worldName = Kk.BusyEcs.WorldResolve.ResolveWorldName(";
                 for (int i = 1; i <= componentCount; i++)
                 {
                     if (i > 1) s += ", ";
@@ -475,23 +482,40 @@ namespace Code.GenSupport
                     s += "typeof(T" + i + ")";
                 }
 
-                s += ");";
-                s += "}";
+                s += ");\n";
+                s += "  }\n";
             }
 
             return s;
         }
 
-        private static void Scan(Context ctx)
+        private static void Scan(Context ctx, IEnumerable<Assembly> assemblies)
         {
             ctx.systemsByPhase = new Dictionary<Type, List<MethodInfo>>();
             ctx.systemClasses = new List<Type>();
 
             HashSet<string> worlds = new HashSet<string>();
             worlds.Add("");
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+
+            foreach (Assembly assembly in assemblies)
             {
-                foreach (Type type in assembly.GetTypes())
+                Type[] types;
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException e)
+                {
+                    foreach (Exception loaderException in e.LoaderExceptions)
+                    {
+                        Debug.LogError(loaderException);
+                    }
+
+                    Debug.LogError(e);
+                    continue;
+                }
+
+                foreach (Type type in types)
                 {
                     if (type.GetCustomAttribute<EcsPhaseAttribute>() != null)
                     {
