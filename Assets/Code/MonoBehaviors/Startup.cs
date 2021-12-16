@@ -20,17 +20,15 @@ namespace Code.MonoBehaviors
 
         // private IEcsContainer _ecs;
         private IEcsContainer _ecs;
-
-        static Startup()
-        {
-            BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
-        }
-
+        
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
-        private static void ConfigureBusyEcs()
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+        private static void ConfigureBusyEcs() 
         {
-            BusyEcs.SystemOrderLockFile = "Assets/Code/EcsSystems/order.lock.yaml";
+            BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
+            BusyEcs.SystemOrderDumpFile = "Assets/Code/EcsSystems/order.lock.yaml";
             BusyEcs.SystemsOrder = systems =>
             {
                 List<string> canonicalOrder = new List<string>
@@ -50,7 +48,6 @@ namespace Code.MonoBehaviors
                     - canonicalOrder.IndexOf(b.DeclaringType.Name));
             };
         }
-#endif
 
         private void OnEnable()
         {
@@ -113,21 +110,21 @@ namespace Code.MonoBehaviors
 
         private void Start()
         {
-            _ecs.NewEntity(new StartGameCommand());
+            _ecs?.NewEntity(new StartGameCommand());
         }
 
         private void Update()
         {
-            _ecs.Execute<EarlyUpdate>();
-            _ecs.Execute<Update>();
-            _ecs.Execute<LateUpdate>();
-            _ecs.Execute<Visualize>();
+            _ecs?.Execute<EarlyUpdate>();
+            _ecs?.Execute<Update>();
+            _ecs?.Execute<LateUpdate>();
+            _ecs?.Execute<Visualize>();
             // _ecsSystems.Run();
         }
 
         private void OnGUI()
         {
-            _ecs.Execute<OnGUI>();
+            _ecs?.Execute<OnGUI>();
         }
 
         private void OnDisable()
