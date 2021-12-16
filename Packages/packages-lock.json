@@ -15,11 +15,11 @@
       "hash": "93d8dcde21f441afe7226eea6635a798aa32aff9"
     },
     "com.nplekhanov.csx.busyecs": {
-      "version": "https://github.com/kkolyan/busyecs.git",
+      "version": "https://github.com/kkolyan/busyecs.git#codegen",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "9c63c1c0b7915e604de17c7315f684fb9f35fd6c"
+      "hash": "127ddd07478996984e5242db28d595f72fc9fe46"
     },
     "com.nplekhanov.csx.core": {
       "version": "https://gitlab.com/kkolyan/csx-core.git",
