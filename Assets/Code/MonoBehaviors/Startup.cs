@@ -21,10 +21,15 @@ namespace Code.MonoBehaviors
         // private IEcsContainer _ecs;
         private IEcsContainer _ecs;
 
+        static Startup()
+        {
+            BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
+        }
+
+#if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
         private static void ConfigureBusyEcs()
         {
-            BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
             BusyEcs.SystemOrderLockFile = "Assets/Code/EcsSystems/order.lock.yaml";
             BusyEcs.SystemsOrder = systems =>
             {
@@ -45,6 +50,7 @@ namespace Code.MonoBehaviors
                     - canonicalOrder.IndexOf(b.DeclaringType.Name));
             };
         }
+#endif
 
         private void OnEnable()
         {

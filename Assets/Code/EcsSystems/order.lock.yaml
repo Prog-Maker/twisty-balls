@@ -1,0 +1,14 @@
+- EarlyUpdate
+  - UserControlsSystem.Act
+  - StartGameSystem.Act
+  - BallInitSystem.Act
+- LateUpdate
+  - BallDestroySystem.Act
+- OnGUI
+  - HUDSystem.Act
+- Update
+  - RestartGameSystem.Act
+  - PhysicsSystem.Act
+  - CriticalMassExplosionSystem.Act
+- Visualize
+  - BallPushToSceneSystem.Act
