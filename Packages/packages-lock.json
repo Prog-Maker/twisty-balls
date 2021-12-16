@@ -14,13 +14,6 @@
       "dependencies": {},
       "hash": "93d8dcde21f441afe7226eea6635a798aa32aff9"
     },
-    "com.nplekhanov.csx.busyecs": {
-      "version": "https://github.com/kkolyan/busyecs.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "77e29437e10cdef72865313a34cf31eb5d4cdcef"
-    },
     "com.nplekhanov.csx.core": {
       "version": "https://gitlab.com/kkolyan/csx-core.git",
       "depth": 0,

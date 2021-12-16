@@ -1,0 +1,4 @@
+[submodule "busyecs"]
+	path = Assets/busyecs
+	url = https://github.com/kkolyan/busyecs.git
+	branch = develop
