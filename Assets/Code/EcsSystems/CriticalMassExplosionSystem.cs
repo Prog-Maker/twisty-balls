@@ -20,13 +20,13 @@ namespace Code.EcsSystems
         [Update]
         public void Act(Entity entity, ref Mass mass, ref Position position)
         {
-            if (mass.mass > config.criticalMass)
+            if (mass.mass > config.Platform().criticalMass)
             {
                 entity.Add<BallDestroyAction>();
                 
                 float diameter = mass.CalcBallDiameter(config);
 
-                for (var i = 0; i < config.initialSpawn.typesCount; i++)
+                for (var i = 0; i < config.Platform().initialSpawn.typesCount; i++)
                 {
                     BallTypeConfig ballType = config.ballTypes[i];
                     Vector2 offset = Random.insideUnitCircle * diameter;
@@ -34,8 +34,8 @@ namespace Code.EcsSystems
                         name: "fragment",
                         position: position.position + offset,
                         direction: offset.normalized,
-                        speed: config.criticalExplosionSpeed,
-                        mass: mass.mass / config.initialSpawn.typesCount,
+                        speed: config.Platform().criticalExplosionSpeed,
+                        mass: mass.mass / config.Platform().initialSpawn.typesCount,
                         ballType
                     ));
                 }

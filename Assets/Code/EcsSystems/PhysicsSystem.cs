@@ -49,7 +49,7 @@ namespace Code.EcsSystems
             });
 
             int stepCount =
-                config.movementStepCount;
+                config.Platform().movementStepCount;
             // Mathf.CeilToInt(maxSegments * config.stepFactor);
 
             float dt = fullDt / stepCount;
@@ -71,10 +71,10 @@ namespace Code.EcsSystems
                 env.Query((ref Velocity velocity, ref Mass mass, ref Position position) =>
                 {
                     // float a = config.gravity * (totalMass - mass.mass) / (position.position - center).sqrMagnitude;
-                    float a = config.gravity;
+                    float a = config.Platform().gravity;
                     velocity.velocity -= position.position.normalized * (a * dt);
                 });
-                Config.CollisionStrategy collisionStrategy = config.collisionStrategy;
+                Config.CollisionStrategy collisionStrategy = config.Platform().collisionStrategy;
                 
                 env.Query((Entity entity, ref Velocity velocity, ref Mass mass, ref Position position) =>
                 {

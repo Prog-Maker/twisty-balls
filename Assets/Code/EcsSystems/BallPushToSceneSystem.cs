@@ -20,7 +20,7 @@ namespace Code.EcsSystems
                 GameObject ball = go.go;
                 if (pushToScene.requestCount > 0)
                 {
-                    ball.transform.localScale = Vector3.one * entity.Get<Mass>().CalcBallDiameter(config) * config.visualRadiusMultiplier;
+                    ball.transform.localScale = Vector3.one * entity.Get<Mass>().CalcBallDiameter(config) * config.Platform().visualRadiusMultiplier;
                     ball.GetComponent<Renderer>().material.color = entity.Get<BallType>().config.color;
                     pushToScene.requestCount = 0;
                 }

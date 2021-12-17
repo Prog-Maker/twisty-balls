@@ -33,7 +33,7 @@ namespace Code.EcsSystems
 
         private GameObject ResolvePrefab()
         {
-            return config.collisionStrategy switch
+            return config.Platform().collisionStrategy switch
             {
                 Config.CollisionStrategy.Unity2D => config.ballPrefab,
                 Config.CollisionStrategy.CustomRegularGrid => config.ballPrefabNoCollider,

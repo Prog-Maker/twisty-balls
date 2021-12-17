@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Code.Dtos
 {
@@ -9,6 +10,7 @@ namespace Code.Dtos
         public int ballNumber;
         public float ballSpeed;
         public float ballMass;
+        public AnimationCurve ballMassDistribution;
         public int typesCount;
     }
 }

@@ -16,9 +16,9 @@ namespace Code.MonoBehaviors
             }
 
             Camera c = GetComponent<Camera>();
-            c.orthographicSize = config.cameraSize;
-            c.farClipPlane = config.cameraSize * 1.2f;
-            c.transform.localPosition = new Vector3(0,0, -config.cameraSize);
+            c.orthographicSize = config.Platform().cameraSize;
+            c.farClipPlane = config.Platform().cameraSize * 1.2f;
+            c.transform.localPosition = new Vector3(0,0, -config.Platform().cameraSize);
             
         }
     }
