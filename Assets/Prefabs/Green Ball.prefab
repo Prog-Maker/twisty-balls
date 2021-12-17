@@ -14,9 +14,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6493308076339696898, guid: 657474bad841aad479ea973189a1b7ed,
         type: 3}
-      propertyPath: config
+      propertyPath: type
       value: 
       objectReference: {fileID: 11400000, guid: 614989b5ed54b354d8e58eb7640d6f96,
+        type: 2}
+    - target: {fileID: 6493308076339696898, guid: 657474bad841aad479ea973189a1b7ed,
+        type: 3}
+      propertyPath: config
+      value: 
+      objectReference: {fileID: 11400000, guid: b0f47684b6ec7b84c86b1b2e926fa33c,
         type: 2}
     - target: {fileID: 6493308076339696899, guid: 657474bad841aad479ea973189a1b7ed,
         type: 3}

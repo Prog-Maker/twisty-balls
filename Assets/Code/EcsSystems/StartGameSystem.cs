@@ -30,12 +30,10 @@ namespace Code.EcsSystems
                     direction: new Vector2(Mathf.Cos(dir * Mathf.Deg2Rad), Mathf.Sin(dir * Mathf.Deg2Rad)),
                     speed: config.initialSpawn.ballSpeed,
                     mass: config.initialSpawn.ballMass,
-                    config: config.ballTypes[Random.Range(0, config.ballTypes.Length)],
+                    config: config.ballTypes[Random.Range(0, config.initialSpawn.typesCount)],
                     name: $"Ball {i:0000}"
                 ));
             }
-
-            command.DelEntity();
 
             foreach (BallSpawn ballSpawn in Object.FindObjectsOfType<BallSpawn>())
             {
@@ -49,6 +47,10 @@ namespace Code.EcsSystems
                     name: ballSpawn.name
                 ));
             }
+
+            command.DelEntity();
+
+            Stats.Instance = default;
         }
     }
 }

@@ -9,5 +9,6 @@ namespace Code.Dtos
         public int ballNumber;
         public float ballSpeed;
         public float ballMass;
+        public int typesCount;
     }
 }

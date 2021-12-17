@@ -13,11 +13,14 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: 
   initialSpawn:
-    maxCenterDistance: 954.3
-    ballNumber: 2000
-    ballSpeed: 546.5
-    ballMass: 1000
+    maxCenterDistance: 700
+    ballNumber: 3000
+    ballSpeed: 257.1
+    ballMass: 1
+    typesCount: 7
   ballPrefab: {fileID: 6886748543666266063, guid: a5b1b1e5c9ef5c84bb5e11768880e076,
+    type: 3}
+  ballPrefabNoCollider: {fileID: 2166479396263301644, guid: 9f8aa4456f2e7654da09f4dc52bd26a6,
     type: 3}
   ballTypes:
   - {fileID: 11400000, guid: 9bf0fed610fa0d44db6d15f735044cf4, type: 2}
@@ -27,9 +30,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2967a950de03b8449900b4c90005f076, type: 2}
   - {fileID: 11400000, guid: 0556c2be5a8d28c4a86bffad95a507aa, type: 2}
   - {fileID: 11400000, guid: ed33242fee48a6d41968360b41c345a7, type: 2}
+  stepFactor: 2
   movementStepCount: 1
-  gravity: 178.6
-  criticalMass: 4380
-  criticalExplosionSpeed: 538.6
-  cameraSize: 1618.97
-  radiusMultiplier: 1.48
+  gravity: 28.3
+  criticalMass: 5
+  criticalExplosionSpeed: 500
+  cameraSize: 4490
+  radiusMultiplier: 12.2
+  visualRadiusMultiplier: 1.68
+  collisionStrategy: 1

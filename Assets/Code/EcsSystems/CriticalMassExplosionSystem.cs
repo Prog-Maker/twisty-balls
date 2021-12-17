@@ -26,18 +26,21 @@ namespace Code.EcsSystems
                 
                 float diameter = mass.CalcBallDiameter(config);
 
-                foreach (BallTypeConfig ballType in config.ballTypes)
+                for (var i = 0; i < config.initialSpawn.typesCount; i++)
                 {
+                    BallTypeConfig ballType = config.ballTypes[i];
                     Vector2 offset = Random.insideUnitCircle * diameter;
                     env.NewEntity(new BallInitAction(
                         name: "fragment",
                         position: position.position + offset,
                         direction: offset.normalized,
                         speed: config.criticalExplosionSpeed,
-                        mass: mass.mass / config.ballTypes.Length,
+                        mass: mass.mass / config.initialSpawn.typesCount,
                         ballType
                     ));
                 }
+
+                Stats.Instance.explosions++;
             }
         }
     }

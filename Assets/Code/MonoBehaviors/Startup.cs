@@ -122,6 +122,11 @@ namespace Code.MonoBehaviors
             // _ecsSystems.Run();
         }
 
+        private void OnDrawGizmos()
+        {
+            _ecs?.Execute<DrawGizmos>();
+        }
+
         private void OnGUI()
         {
             _ecs?.Execute<OnGUI>();
