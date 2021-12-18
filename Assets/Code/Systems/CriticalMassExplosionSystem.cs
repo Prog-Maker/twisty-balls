@@ -22,24 +22,27 @@ namespace Code.Systems
             foreach (int entity in _masses)
             {
                 ref Mass mass = ref _mass.Get(entity);
-                if (mass.mass > _config.criticalMass)
+                if (mass.mass > _config.Platform().criticalMass)
                 {
                     _ballDestroy.Add(entity);
                     
                     float diameter = mass.CalcBallDiameter(_config);
 
-                    foreach (BallTypeConfig ballType in _config.ballTypes)
+                    for (var i = 0; i < _config.Platform().initialSpawn.typesCount; i++)
                     {
+                        BallTypeConfig ballType = _config.ballTypes[i];
                         Vector2 offset = Random.insideUnitCircle * diameter;
                         _ballInit.Add(systems.GetWorld().NewEntity()) = new BallInitAction(
                             name: "fragment",
                             position: _pos.Get(entity).position + offset,
                             direction: offset.normalized,
-                            speed: _config.criticalExplosionSpeed,
-                            mass: mass.mass / _config.ballTypes.Length,
+                            speed: _config.Platform().criticalExplosionSpeed,
+                            mass: mass.mass / _config.Platform().initialSpawn.ballNumber,
                             ballType
                         );
                     }
+
+                    Stats.Instance.explosions++;
                 }
             }
         }

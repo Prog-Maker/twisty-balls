@@ -12,12 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68f5ded588b94db6a9fd99ae1c4f1d99, type: 3}
   m_Name: Config
   m_EditorClassIdentifier: 
-  initialSpawn:
-    maxCenterDistance: 954.3
-    ballNumber: 2000
-    ballSpeed: 546.5
-    ballMass: 1000
   ballPrefab: {fileID: 6886748543666266063, guid: a5b1b1e5c9ef5c84bb5e11768880e076,
+    type: 3}
+  ballPrefabNoCollider: {fileID: 2166479396263301644, guid: 9f8aa4456f2e7654da09f4dc52bd26a6,
     type: 3}
   ballTypes:
   - {fileID: 11400000, guid: 9bf0fed610fa0d44db6d15f735044cf4, type: 2}
@@ -27,9 +24,89 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2967a950de03b8449900b4c90005f076, type: 2}
   - {fileID: 11400000, guid: 0556c2be5a8d28c4a86bffad95a507aa, type: 2}
   - {fileID: 11400000, guid: ed33242fee48a6d41968360b41c345a7, type: 2}
-  movementStepCount: 1
-  gravity: 178.6
-  criticalMass: 4380
-  criticalExplosionSpeed: 538.6
-  cameraSize: 1618.97
-  radiusMultiplier: 1.48
+  - {fileID: 11400000, guid: 05d25d676b12cf5419cf6c2ef6112594, type: 2}
+  - {fileID: 11400000, guid: 591d8d9eaabc3164288b9cc11f9fd492, type: 2}
+  - {fileID: 11400000, guid: f7cb710fc6e5cd7498c559ca7d7ae0b1, type: 2}
+  - {fileID: 11400000, guid: 1ae29ce4eb40f2a4c806e7d37543d654, type: 2}
+  - {fileID: 11400000, guid: d3b875e6444f0cf4e9abe0acc6c2b7d0, type: 2}
+  pc:
+    initialSpawn:
+      maxCenterDistance: 700
+      ballNumber: 4000
+      ballSpeed: 257.1
+      ballMass: 1
+      ballMassDistribution:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0.5
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1.5
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      typesCount: 12
+    stepFactor: 2
+    movementStepCount: 1
+    gravity: 28.3
+    criticalMass: 3
+    criticalExplosionSpeed: 500
+    cameraSize: 4490
+    radiusMultiplier: 8.15
+    visualRadiusMultiplier: 2.33
+    collisionStrategy: 1
+  webgl:
+    initialSpawn:
+      maxCenterDistance: 1700
+      ballNumber: 1200
+      ballSpeed: 317
+      ballMass: 1
+      ballMassDistribution:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0.5
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1.5
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      typesCount: 8
+    stepFactor: 2
+    movementStepCount: 1
+    gravity: 25.3
+    criticalMass: 4.5
+    criticalExplosionSpeed: 450
+    cameraSize: 4490
+    radiusMultiplier: 20.2
+    visualRadiusMultiplier: 1
+    collisionStrategy: 1
+  editorIsWebgl: 1

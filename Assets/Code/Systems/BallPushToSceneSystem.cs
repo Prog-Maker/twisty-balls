@@ -25,7 +25,7 @@ namespace Code.Systems
                 GameObject ball = _go.Get(entity).go;
                 if (_push.Get(entity).requestCount > 0)
                 {
-                    ball.transform.localScale = Vector3.one * _mass.Get(entity).CalcBallDiameter(_config);
+                    ball.transform.localScale = Vector3.one * _mass.Get(entity).CalcBallDiameter(_config) * _config.Platform().visualRadiusMultiplier;
                     ball.GetComponent<Renderer>().material.color = _ballType.Get(entity).config.color;
                     _push.Get(entity).requestCount = 0;
                 }

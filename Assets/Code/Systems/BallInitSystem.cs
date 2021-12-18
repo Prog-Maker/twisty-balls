@@ -1,9 +1,11 @@
+using System;
 using Code.EcsComponents;
 using Code.MonoBehaviors;
 using Code.SO;
 using Leopotam.EcsLite;
 using Leopotam.EcsLite.Di;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Code.Systems
 {
@@ -29,7 +31,7 @@ namespace Code.Systems
                 _velocity.Add(entity).velocity = initAction.direction * initAction.speed;
                 _mass.Add(entity).mass = initAction.mass;
                 _ballType.Add(entity) = new BallType(initAction.config);
-                GameObject go = Object.Instantiate(_config.ballPrefab);
+                GameObject go = Object.Instantiate(ResolvePrefab());
                 go.name = initAction.name;
                 go.AddComponent<EntityLink>().entity = systems.GetWorld().PackEntityWithWorld(entity);
                 _go.Add(entity) = new Go(go);
@@ -37,6 +39,16 @@ namespace Code.Systems
                 
                 _ballInitAction.Del(entity);
             }
+        }
+
+        private GameObject ResolvePrefab()
+        {
+            return _config.Platform().collisionStrategy switch
+            {
+                Config.CollisionStrategy.Unity2D => _config.ballPrefab,
+                Config.CollisionStrategy.CustomRegularGrid => _config.ballPrefabNoCollider,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
     }
 }

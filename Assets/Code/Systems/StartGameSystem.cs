@@ -18,21 +18,20 @@ namespace Code.Systems
             Random.InitState(123);
             foreach (int command in _startGames)
             {
-                for (int i = 0; i < _config.initialSpawn.ballNumber; i++)
+                for (int i = 0; i < _config.Platform().initialSpawn.ballNumber; i++)
                 {
                     float dir = Random.Range(0, 360);
-                    Vector2 position = Random.insideUnitCircle * (_config.initialSpawn.maxCenterDistance * 2);
+                    Vector2 position = Random.insideUnitCircle * (_config.Platform().initialSpawn.maxCenterDistance * 2);
                     _ballInit.Add(systems.GetWorld().NewEntity()) = new BallInitAction(
                         position: position,
                         direction: new Vector2(Mathf.Cos(dir * Mathf.Deg2Rad), Mathf.Sin(dir * Mathf.Deg2Rad)),
-                        speed: _config.initialSpawn.ballSpeed,
-                        mass: _config.initialSpawn.ballMass,
-                        config: _config.ballTypes[Random.Range(0, _config.ballTypes.Length)],
+                        speed: _config.Platform().initialSpawn.ballSpeed,
+                        mass: _config.Platform().initialSpawn.ballMass * _config.Platform().initialSpawn.ballMassDistribution.Evaluate(Random.value),
+                        config: _config.ballTypes[Random.Range(0, _config.Platform().initialSpawn.typesCount)],
                         name: $"Ball {i:0000}"
                     );
                 }
 
-                systems.GetWorld().DelEntity(command);
 
                 foreach (BallSpawn ballSpawn in Object.FindObjectsOfType<BallSpawn>())
                 {
@@ -46,6 +45,9 @@ namespace Code.Systems
                         name: ballSpawn.name
                     );
                 }
+
+                systems.GetWorld().DelEntity(command);
+                Stats.Instance = default;
             }
         }
     }
