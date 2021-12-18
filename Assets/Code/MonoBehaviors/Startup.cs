@@ -25,8 +25,9 @@ namespace Code.MonoBehaviors
         [UnityEditor.InitializeOnLoadMethod]
 #endif
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-        private static void ConfigureBusyEcs() 
+        private static void ConfigureBusyEcs()
         {
+            BusyEcs.SkipIterationCheck = true;
             BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
             BusyEcs.SystemOrderDumpFile = "Assets/Code/EcsSystems/order.lock.yaml";
             BusyEcs.SystemsOrder = systems =>

@@ -22,7 +22,10 @@ namespace Code.EcsSystems
         {
             if (mass.mass > config.Platform().criticalMass)
             {
-                entity.Add<BallDestroyAction>();
+                if (!entity.Has<BallDestroyAction>())
+                {
+                    entity.Add<BallDestroyAction>();
+                }
                 
                 float diameter = mass.CalcBallDiameter(config);
 

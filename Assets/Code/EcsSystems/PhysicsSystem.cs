@@ -6,6 +6,7 @@ using Code.Oop;
 using Code.Phases;
 using Code.SO;
 using Kk.BusyEcs;
+using Leopotam.EcsLite;
 using UnityEngine;
 
 namespace Code.EcsSystems
@@ -15,6 +16,15 @@ namespace Code.EcsSystems
     {
         private static Entity[] _candidates = new Entity[64];
         private static RegularGrid<Entity> _collisionGrid = new RegularGrid<Entity>(new Vector2(-3000, -1600), new Vector2(6000, 3200), 100, 5000);
+
+        private struct Del
+        {
+            public int component;
+            public Entity entity;
+        }
+
+        private static Del[] _delQueue = new Del[1024];
+        private static int _delCount;
 
         [Serializable]
         public struct CollisionApplied { }
@@ -97,6 +107,11 @@ namespace Code.EcsSystems
                     {
                         return;
                     }
+                    
+                    if (entity.Has<BallDestroyAction>())
+                    {
+                        return;
+                    }
 
                     if (collisionStrategy == Config.CollisionStrategy.CustomRegularGrid)
                     {
@@ -104,6 +119,7 @@ namespace Code.EcsSystems
 
                         for (int j = 0; j < candidateCount; j++)
                         {
+                            bool @break = false;
                             _candidates[j].Match((Entity another, ref Position anotherPos, ref Mass anotherMass) =>
                             {
                                 if (another == entity)
@@ -129,7 +145,10 @@ namespace Code.EcsSystems
                                 {
                                     Bounce(entity, another);
                                 }
+
+                                @break = true;
                             });
+                            if (@break) break;
                         }
                     }
 
@@ -166,6 +185,14 @@ namespace Code.EcsSystems
                 }
 
                 env.Query((Entity another, ref CollisionApplied _) => another.Del<CollisionApplied>());
+                
+                while (_delCount > 0)
+                {
+                    ref Del del = ref _delQueue[_delCount - 1];
+                    del.entity.GetRaw(out EcsWorld world, out var entity);
+                    world.GetPoolById(del.component).Del(entity);
+                    _delCount--;
+                }
             }
         }
 
@@ -191,8 +218,6 @@ namespace Code.EcsSystems
             b1.Get<PushToScene>().requestCount++;
 
             b2.Add<BallDestroyAction>();
-            b2.Del<Mass>();
-            b2.Del<Velocity>();
         }
 
         private void Bounce(Entity b1, Entity b2)
