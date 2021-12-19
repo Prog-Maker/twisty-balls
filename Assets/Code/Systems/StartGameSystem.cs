@@ -15,9 +15,9 @@ namespace Code.Systems
 
         public void Run(EcsSystems systems)
         {
-            Random.InitState(123);
             foreach (int command in _startGames)
             {
+                Random.InitState(123);
                 for (int i = 0; i < _config.Platform().initialSpawn.ballNumber; i++)
                 {
                     float dir = Random.Range(0, 360);

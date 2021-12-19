@@ -24,7 +24,10 @@ namespace Code.Systems
                 ref Mass mass = ref _mass.Get(entity);
                 if (mass.mass > _config.Platform().criticalMass)
                 {
-                    _ballDestroy.Add(entity);
+                    if (!_ballDestroy.Has(entity))
+                    {
+                        _ballDestroy.Add(entity);
+                    }
                     
                     float diameter = mass.CalcBallDiameter(_config);
 
@@ -37,7 +40,7 @@ namespace Code.Systems
                             position: _pos.Get(entity).position + offset,
                             direction: offset.normalized,
                             speed: _config.Platform().criticalExplosionSpeed,
-                            mass: mass.mass / _config.Platform().initialSpawn.ballNumber,
+                            mass: mass.mass / _config.Platform().initialSpawn.typesCount,
                             ballType
                         );
                     }

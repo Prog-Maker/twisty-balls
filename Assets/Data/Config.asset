@@ -72,7 +72,7 @@ MonoBehaviour:
   webgl:
     initialSpawn:
       maxCenterDistance: 1700
-      ballNumber: 1200
+      ballNumber: 0
       ballSpeed: 317
       ballMass: 1
       ballMassDistribution:

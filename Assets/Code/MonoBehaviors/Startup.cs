@@ -20,6 +20,7 @@ namespace Code.MonoBehaviors
 
         private void Start()
         {
+            Application.targetFrameRate = 60;
             _ecsWorld = new EcsWorld();
 
             _update = new EcsSystems(_ecsWorld, config)

@@ -11,10 +11,10 @@ using UnityEngine;
 
 namespace Code.Systems
 {
-    public class PhysicsSystem : IEcsRunSystem
+    public class PhysicsSystem : IEcsRunSystem, IEcsInitSystem
     {
-        private static int[] _candidates = new int[64];
-        private static RegularGrid<int> _collisionGrid = new RegularGrid<int>(new Vector2(-3000, -1600), new Vector2(6000, 3200), 100, 5000);
+        private int[] _candidates = new int[64];
+        private RegularGrid<int> _collisionGrid;
 
         [Serializable]
         private struct CollisionApplied { }
@@ -29,10 +29,19 @@ namespace Code.Systems
         [EcsPool] private EcsPool<BallDestroyAction> _ballDestroy;
         [EcsPool] private EcsPool<CollisionApplied> _collAppl;
         [EcsPool] private EcsPool<PushToScene> _push;
-        [EcsFilter(typeof(Velocity), typeof(Mass))] private EcsFilter _balls;
-        [EcsFilter(typeof(CollisionApplied))]private EcsFilter _collAppls;
+
+        [EcsFilter(typeof(Velocity), typeof(Mass))]
+        private EcsFilter _balls;
+
+        [EcsFilter(typeof(CollisionApplied))] private EcsFilter _collAppls;
 
         private static Collider2D[] _results = new Collider2D[1024];
+
+        public void Init(EcsSystems systems)
+        {
+            float step = new Mass {mass = 10}.CalcBallDiameter(_config);
+            _collisionGrid = new RegularGrid<int>(new Vector2(-3000, -1600), new Vector2(6000, 3200), step, 5000);
+        }
 
         public void Run(EcsSystems systems)
         {
@@ -58,6 +67,7 @@ namespace Code.Systems
                     float a = _config.Platform().gravity;
                     _velocity.Get(entity).velocity -= _pos.Get(entity).position.normalized * (a * dt);
                 }
+
                 Config.CollisionStrategy collisionStrategy = _config.Platform().collisionStrategy;
 
                 foreach (int entity in _balls)
@@ -71,9 +81,8 @@ namespace Code.Systems
 
                 foreach (int entity in _balls)
                 {
-                    if (!_velocity.Has(entity) || !_mass.Has(entity))
+                    if (_ballDestroy.Has(entity))
                     {
-                        // because this loop can delete these components by reference from this loop
                         continue;
                     }
 
@@ -84,8 +93,10 @@ namespace Code.Systems
 
                     ref Position position = ref _pos.Get(entity);
 
-                    if (collisionStrategy == Config.CollisionStrategy.Unity2D) {
-                        int collisionCount = Physics2D.OverlapCircleNonAlloc(position.position, _mass.Get(entity).CalcBallDiameter(_config) / 2, _results);
+                    if (collisionStrategy == Config.CollisionStrategy.Unity2D)
+                    {
+                        int collisionCount =
+                            Physics2D.OverlapCircleNonAlloc(position.position, _mass.Get(entity).CalcBallDiameter(_config) / 2, _results);
                         for (int j = 0; j < collisionCount; j++)
                         {
                             if (!_results[j].TryGetComponent(out EntityLink link))
@@ -99,16 +110,16 @@ namespace Code.Systems
 
                             if (!_mass.Has(another))
                                 continue;
-                            
-                            if (another == entity) 
-                                continue; 
-                            
+
+                            if (another == entity)
+                                continue;
+
                             if (_ballDestroy.Has(another))
                                 continue;
-                            if (_collAppl.Has(another)) 
+                            if (_collAppl.Has(another))
                                 continue;
                             _collAppl.Add(another);
-                            if (DoDistanceGrow(entity, another)) 
+                            if (DoDistanceGrow(entity, another))
                                 continue;
                             if (_type.Get(another).config == _type.Get(entity).config)
                             {
@@ -122,7 +133,7 @@ namespace Code.Systems
                             break;
                         }
                     }
-                    
+
                     if (collisionStrategy == Config.CollisionStrategy.CustomRegularGrid)
                     {
                         int candidateCount = _collisionGrid.SearchNonAlloc(position.position, _candidates);
@@ -131,28 +142,25 @@ namespace Code.Systems
                         {
                             int another = _candidates[j];
 
-                            if (!_velocity.Has(another))
+                            if (another == entity)
                                 continue;
 
-                            if (!_mass.Has(another))
+                            if (_ballDestroy.Has(another))
                                 continue;
-                            
-                            if (another == entity) 
-                                continue; 
 
                             if ((_mass.Get(another).CalcBallDiameter(_config) + _mass.Get(entity).CalcBallDiameter(_config)) / 2 <
                                 (_pos.Get(another).position - position.position).magnitude)
                             {
-                                break;
-                            }
-                            
-                            if (_ballDestroy.Has(another))
                                 continue;
-                            if (_collAppl.Has(another)) 
+                            }
+
+                            if (_collAppl.Has(another))
                                 continue;
                             _collAppl.Add(another);
-                            if (DoDistanceGrow(entity, another)) 
+
+                            if (DoDistanceGrow(entity, another))
                                 continue;
+
                             if (_type.Get(another).config == _type.Get(entity).config)
                             {
                                 Merge(entity, another);
@@ -201,8 +209,6 @@ namespace Code.Systems
             _push.Get(b1).requestCount++;
 
             _ballDestroy.Add(b2);
-            _mass.Del(b2);
-            _velocity.Del(b2);
         }
 
         private void Bounce(int b1, int b2)
