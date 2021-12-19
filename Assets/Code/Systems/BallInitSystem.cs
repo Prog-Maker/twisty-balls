@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Code.EcsComponents;
 using Code.MonoBehaviors;
 using Code.SO;
@@ -15,7 +16,10 @@ namespace Code.Systems
         [EcsFilter(typeof(BallInitAction))] private EcsFilter _ballInitActions;
         [EcsPool] private EcsPool<BallInitAction> _ballInitAction;
         [EcsPool] private EcsPool<Position> _position;
+
         [EcsPool] private EcsPool<Velocity> _velocity;
+
+        // [EcsPool] private EcsPool<IgnoreContacts> _ignoreContacts;
         [EcsPool] private EcsPool<Mass> _mass;
         [EcsPool] private EcsPool<BallType> _ballType;
         [EcsPool] private EcsPool<Go> _go;
@@ -31,12 +35,16 @@ namespace Code.Systems
                 _velocity.Add(entity).velocity = initAction.direction * initAction.speed;
                 _mass.Add(entity).mass = initAction.mass;
                 _ballType.Add(entity) = new BallType(initAction.config);
+                // _ignoreContacts.Add(entity).entities = new HashSet<int>();
                 GameObject go = Object.Instantiate(ResolvePrefab());
-                go.name = initAction.name;
+#if DEBUG
+                go.name = $"Go {entity}";
+#endif
+                // go.name = initAction.name;
                 go.AddComponent<EntityLink>().entity = systems.GetWorld().PackEntityWithWorld(entity);
                 _go.Add(entity) = new Go(go);
                 _pushToScene.Add(entity).requestCount++;
-                
+
                 _ballInitAction.Del(entity);
             }
         }

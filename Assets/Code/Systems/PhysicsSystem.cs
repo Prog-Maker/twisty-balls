@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using Code.EcsComponents;
 using Code.Extensions;
 using Code.MonoBehaviors;
@@ -6,8 +6,10 @@ using Code.Oop;
 using Code.SO;
 using Leopotam.EcsLite;
 using Leopotam.EcsLite.Di;
-using UnityEditor;
 using UnityEngine;
+
+namespace Code.Oop
+{ }
 
 namespace Code.Systems
 {
@@ -16,8 +18,9 @@ namespace Code.Systems
         private int[] _candidates = new int[64];
         private RegularGrid<int> _collisionGrid;
 
-        [Serializable]
-        private struct CollisionApplied { }
+        // that works a bit bad with hot reload - one frame information is lost, but we do not care
+        private HashSet<SymmetricEntityPair> _collidedPrevFrame = new HashSet<SymmetricEntityPair>();
+        private HashSet<SymmetricEntityPair> _collidedThisFrame = new HashSet<SymmetricEntityPair>();
 
         [EcsShared] private Config _config;
 
@@ -27,20 +30,21 @@ namespace Code.Systems
         [EcsPool] private EcsPool<Mass> _mass;
         [EcsPool] private EcsPool<Velocity> _velocity;
         [EcsPool] private EcsPool<BallDestroyAction> _ballDestroy;
-        [EcsPool] private EcsPool<CollisionApplied> _collAppl;
         [EcsPool] private EcsPool<PushToScene> _push;
 
         [EcsFilter(typeof(Velocity), typeof(Mass))]
         private EcsFilter _balls;
 
-        [EcsFilter(typeof(CollisionApplied))] private EcsFilter _collAppls;
-
         private static Collider2D[] _results = new Collider2D[1024];
 
         public void Init(EcsSystems systems)
         {
-            float step = new Mass {mass = 10}.CalcBallDiameter(_config);
-            _collisionGrid = new RegularGrid<int>(new Vector2(-3000, -1600), new Vector2(6000, 3200), step, 5000);
+            float size = Camera.main.orthographicSize;
+            float aspect = Camera.main.aspect;
+            Vector2 gridSize = new Vector2(aspect * size, size);
+            float step = new Mass { mass = _config.Platform().criticalMass }.CalcBallDiameter(_config) * 2;
+            Debug.Log($"regular grid with step {step} is used");
+            _collisionGrid = new RegularGrid<int>(-gridSize / 2, gridSize, step, 5000);
         }
 
         public void Run(EcsSystems systems)
@@ -75,18 +79,14 @@ namespace Code.Systems
                     _pos.Get(entity).position += _velocity.Get(entity).velocity * dt;
                     if (collisionStrategy == Config.CollisionStrategy.CustomRegularGrid)
                     {
-                        _collisionGrid.Add(_pos.Get(entity).position, entity);
+                        Vector2 position = _pos.Get(entity).position;
+                        _collisionGrid.Add(position, entity);
                     }
                 }
 
                 foreach (int entity in _balls)
                 {
                     if (_ballDestroy.Has(entity))
-                    {
-                        continue;
-                    }
-
-                    if (_collAppl.Has(entity))
                     {
                         continue;
                     }
@@ -105,32 +105,47 @@ namespace Code.Systems
                             if (!link.entity.Unpack(out EcsWorld _, out int another))
                                 continue;
 
+                            if (another == entity)
+                                continue;
+
                             if (!_velocity.Has(another))
                                 continue;
 
                             if (!_mass.Has(another))
                                 continue;
 
-                            if (another == entity)
-                                continue;
-
                             if (_ballDestroy.Has(another))
+                            {
                                 continue;
-                            if (_collAppl.Has(another))
+                            }
+
+                            float distance = (_pos.Get(another).position - position.position).magnitude;
+                            float minimalDistance = (_mass.Get(another).CalcBallDiameter(_config) + _mass.Get(entity).CalcBallDiameter(_config)) / 2;
+                            if (distance > minimalDistance)
+                            {
                                 continue;
-                            _collAppl.Add(another);
-                            if (DoDistanceGrow(entity, another))
-                                continue;
+                            }
+
                             if (_type.Get(another).config == _type.Get(entity).config)
                             {
                                 Merge(entity, another);
                             }
                             else
                             {
-                                Bounce(entity, another);
-                            }
+                                SymmetricEntityPair pair = new SymmetricEntityPair(entity, another);
+                                bool processedFromOtherSide = !_collidedThisFrame.Add(pair);
+                                bool stuckInside = _collidedPrevFrame.Contains(pair);
 
-                            break;
+                                if (stuckInside || !processedFromOtherSide)
+                                {
+                                    PushAway(entity, another);
+                                }
+
+                                if (!processedFromOtherSide && !stuckInside)
+                                {
+                                    Bounce(entity, another);
+                                }
+                            }
                         }
                     }
 
@@ -143,23 +158,21 @@ namespace Code.Systems
                             int another = _candidates[j];
 
                             if (another == entity)
-                                continue;
-
-                            if (_ballDestroy.Has(another))
-                                continue;
-
-                            if ((_mass.Get(another).CalcBallDiameter(_config) + _mass.Get(entity).CalcBallDiameter(_config)) / 2 <
-                                (_pos.Get(another).position - position.position).magnitude)
                             {
                                 continue;
                             }
 
-                            if (_collAppl.Has(another))
+                            if (_ballDestroy.Has(another))
+                            {
                                 continue;
-                            _collAppl.Add(another);
+                            }
 
-                            if (DoDistanceGrow(entity, another))
+                            float distance = (_pos.Get(another).position - position.position).magnitude;
+                            float minimalDistance = (_mass.Get(another).CalcBallDiameter(_config) + _mass.Get(entity).CalcBallDiameter(_config)) / 2;
+                            if (distance > minimalDistance)
+                            {
                                 continue;
+                            }
 
                             if (_type.Get(another).config == _type.Get(entity).config)
                             {
@@ -167,10 +180,20 @@ namespace Code.Systems
                             }
                             else
                             {
-                                Bounce(entity, another);
-                            }
+                                SymmetricEntityPair pair = new SymmetricEntityPair(entity, another);
+                                bool processedFromOtherSide = !_collidedThisFrame.Add(pair);
+                                bool stuckInside = _collidedPrevFrame.Contains(pair);
 
-                            break;
+                                if (stuckInside || !processedFromOtherSide)
+                                {
+                                    PushAway(entity, another);
+                                }
+
+                                if (!processedFromOtherSide && !stuckInside)
+                                {
+                                    Bounce(entity, another);
+                                }
+                            }
                         }
                     }
                 }
@@ -180,11 +203,16 @@ namespace Code.Systems
                     _collisionGrid.Clear();
                 }
 
-                foreach (int another in _collAppls)
-                {
-                    _collAppl.Del(another);
-                }
+                (_collidedPrevFrame, _collidedThisFrame) = (_collidedThisFrame, _collidedPrevFrame);
+                _collidedThisFrame.Clear();
             }
+        }
+
+        private void PushAway(int b1, int b2)
+        {
+            Vector2 push1 = (_pos.Get(b1).position - _pos.Get(b2).position).normalized;
+            _velocity.Get(b1).velocity += push1 * _config.pushAwaySpeed;
+            _velocity.Get(b2).velocity -= push1 * _config.pushAwaySpeed;
         }
 
         private void Merge(int b1, int b2)
@@ -224,25 +252,6 @@ namespace Code.Systems
                 _pos.Get(b1).position, prevB1Velocity, _mass.Get(b1).mass
             );
         }
-
-        private bool DoDistanceGrow(int b1, int b2)
-        {
-            Vector2 p1 = _pos.Get(b1).position;
-            Vector2 p2 = _pos.Get(b2).position;
-            Vector2 v1 = _velocity.Get(b1).velocity;
-            Vector2 v2 = _velocity.Get(b2).velocity;
-
-            // float epsilon = Mathf.Epsilon;
-            float epsilon = 0.001f;
-            Vector2 p1Next = p1 + v1 * epsilon;
-            Vector2 p2Next = p2 + v2 * epsilon;
-            return (p1 - p2).sqrMagnitude < (p1Next - p2Next).sqrMagnitude;
-        }
-
-        // private Vector2 ElasticImpactSpeed(Vector3 v1, float m1, Vector3 v2, float m2)
-        // {
-        //     return ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2);
-        // }
 
         private Vector2 ElasticImpactSpeed(
             Vector2 x1,

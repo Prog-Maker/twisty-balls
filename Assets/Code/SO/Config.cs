@@ -12,6 +12,7 @@ namespace Code.SO
         public Preset pc;
         public Preset webgl;
         public bool editorIsWebgl;
+        public float pushAwaySpeed;
 
         public Preset Platform()
         {

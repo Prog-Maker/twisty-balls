@@ -50,13 +50,13 @@ namespace Code.Oop
             return x + y * _gridSize.x;
         }
 
-        public void Add(Vector2 pos, in T value)
+        public bool Add(Vector2 pos, in T value)
         {
             Vector2 cell = (pos - _offset) / _step;
             int cellIndex = CellIndex(Mathf.FloorToInt(cell.x), Mathf.FloorToInt(cell.y));
             if (cellIndex < 0)
             {
-                return;
+                return false;
             }
 
             if (_nodeCount >= _nodes.Length)
@@ -72,6 +72,7 @@ namespace Code.Oop
                 nextNodeId = prevNodeId
             };
             _nodeIdsGrid[cellIndex] = nodeId;
+            return true;
         }
 
         public void Clear()
