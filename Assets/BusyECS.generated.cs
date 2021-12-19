@@ -80,6 +80,9 @@ public class GeneratedEcsContainer : Kk.BusyEcs.Internal.IConfigurableEcsContain
         _BallInitSystem.Act(new Entity(events, entity5), pool_events_BallInitAction.Get(entity5));
       }
     };
+    _phaseExecutionByType[typeof(Code.Phases.Init)] = () => {
+      _PhysicsSystem.Init();
+    };
     _phaseExecutionByType[typeof(Code.Phases.LateUpdate)] = () => {
       foreach (var entity6 in filter_defaultWorld_BallDestroyAction) {
         _BallDestroySystem.Act(new Entity(defaultWorld, entity6), pool_defaultWorld_BallDestroyAction.Get(entity6));

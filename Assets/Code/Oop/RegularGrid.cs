@@ -18,41 +18,41 @@ namespace Code.Oop
             }
         }
 
-        private readonly Vector2 _offset;
-        private readonly Vector2 _size;
-        private readonly float _step;
+        public readonly Vector2 offset;
+        public readonly Vector2 size;
+        public readonly float step;
 
         private readonly int[] _nodeIdsGrid;
         private Node[] _nodes;
         private int _nodeCount;
 
-        private Vector2Int _gridSize;
+        public readonly Vector2Int gridSize;
 
         private static T[] _searchTmp;
 
         public RegularGrid(Vector2 offset, Vector2 size, float step, int initialPoolSize)
         {
-            _offset = offset;
-            _size = size;
-            _step = step;
-            _gridSize.x = Mathf.CeilToInt(size.x / step);
-            _gridSize.y = Mathf.CeilToInt(size.y / step);
+            this.offset = offset;
+            this.size = size;
+            this.step = step;
+            gridSize.x = Mathf.CeilToInt(size.x / step);
+            gridSize.y = Mathf.CeilToInt(size.y / step);
 
             _nodes = new Node[initialPoolSize];
-            _nodeIdsGrid = new int[_gridSize.x * _gridSize.y];
+            _nodeIdsGrid = new int[gridSize.x * gridSize.y];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CellIndex(int x, int y)
         {
-            if (x < 0 || x >= _gridSize.x) return -1;
-            if (y < 0 || y >= _gridSize.y) return -1;
-            return x + y * _gridSize.x;
+            if (x < 0 || x >= gridSize.x) return -1;
+            if (y < 0 || y >= gridSize.y) return -1;
+            return x + y * gridSize.x;
         }
 
         public void Add(Vector2 pos, in T value)
         {
-            Vector2 cell = (pos - _offset) / _step;
+            Vector2 cell = (pos - offset) / step;
             int cellIndex = CellIndex(Mathf.FloorToInt(cell.x), Mathf.FloorToInt(cell.y));
             if (cellIndex < 0)
             {
@@ -99,7 +99,7 @@ namespace Code.Oop
         {
             int resultsCount = 0;
 
-            Vector2 cell = (pos - _offset) / _step;
+            Vector2 cell = (pos - offset) / step;
             SearchNode(ref resultsCount, results, CellIndex(Mathf.RoundToInt(cell.x), Mathf.RoundToInt(cell.y)));
             SearchNode(ref resultsCount, results, CellIndex(Mathf.RoundToInt(cell.x - 1), Mathf.RoundToInt(cell.y)));
             SearchNode(ref resultsCount, results, CellIndex(Mathf.RoundToInt(cell.x), Mathf.RoundToInt(cell.y - 1)));

@@ -27,6 +27,7 @@ namespace Code.MonoBehaviors
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         private static void ConfigureBusyEcs()
         {
+            Application.targetFrameRate = 60;
             BusyEcs.SkipIterationCheck = true;
             BusyEcs.SetUserAssemblies(typeof(Startup).Assembly);
             BusyEcs.SystemOrderDumpFile = "Assets/Code/EcsSystems/order.lock.yaml";
@@ -62,6 +63,7 @@ namespace Code.MonoBehaviors
 
             InitEcsDebugger();
             _ecsSystems.Init();
+            _ecs.Execute<Init>();
 
             stash ??= new SerializableEcsUniverse();
 
@@ -73,7 +75,8 @@ namespace Code.MonoBehaviors
                         return 0;
                     }
 
-                    entity.GetRaw(out EcsWorld world, out var id);
+                    EcsWorld world = entity.GetWorldRef().GetWorld();
+                    int id = entity.GetInternalId();
 
                     TempEntityKey tempEntityKey = new TempEntityKey(ctx.worldToName[world], id);
                     return ctx.entityToPackedId[tempEntityKey];
